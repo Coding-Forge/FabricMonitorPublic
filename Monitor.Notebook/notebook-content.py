@@ -39,14 +39,34 @@ import json
 from datetime import datetime
 from datetime import timedelta
 from adal import AuthenticationContext
+from azure.identity import ClientSecretCredential
+from azure.storage.filedatalake import FileSystemClient, DataLakeDirectoryClient
 
 
 # MARKDOWN ********************
 
 # ### Utility functions
 # 
-# Until I can figure out where to put my utility or have a class this section will do
-
+# Until I can figure out where to put my utility or have a class this section will do  
+# 
+# #### Using File System Client  
+# 
+# To work with files on lakehouse or warehouse see examples
+# 
+# using service principals with fabric lakehouse and warehouse 
+# 
+# [Fabric Service Principals](https://debruyn.dev/2023/how-to-use-service-principal-authentication-to-access-microsoft-fabrics-onelake/)
+# 
+# ```
+#     paths = file_system_client.get_paths(path=f"/{lakehouse name}.Lakehouse/Files/")
+#     for p in paths:
+#         print(p.name)
+# 
+# 
+#     paths = file_system_client.get_paths(path=f"/{warehouse name}.Warehouse/Tables/")
+#     for p in paths:
+#         print(p.name)
+# ```
 
 # CELL ********************
 
@@ -81,6 +101,67 @@ def get_context():
 
     return headers
 
+def convert(date_time):
+    format = "%Y-%m-%dT%H:%M:%SZ"
+    datetime_str = datetime.strptime(date_time, format)
+ 
+    return datetime_str
+
+## Lakehouse File functions
+
+def get_file_system_client(tenant_id, client_id, client_secret, workspace_name) -> FileSystemClient:
+    cred = ClientSecretCredential(tenant_id=tenant_id,
+                                client_id=client_id,
+                                client_secret=client_secret)
+
+    file_system_client = FileSystemClient(
+        account_url="https://onelake.dfs.fabric.microsoft.com",
+        file_system_name=workspace_name,
+        credential=cred)
+
+    return file_system_client
+
+def create_file_system_client(service_client, file_system_name: str) -> FileSystemClient:
+    file_system_client = service_client.get_file_system_client(file_system=file_system_name)
+    return file_system_client
+
+def create_directory_client(file_system_client: FileSystemClient, path: str) -> DataLakeDirectoryClient:
+    directory_client = file_system_client.get_directory_client(path)
+    return directory_client
+
+def list_directory_contents(file_system_client: FileSystemClient, directory_name: str):
+    paths = file_system_client.get_paths(path=directory_name)
+    for path in paths:
+        print(path.name + '\n')
+
+def upload_file_to_directory(directory_client: DataLakeDirectoryClient, local_path: str, file_name: str):
+    file_client = directory_client.get_file_client(file_name)
+
+    with open(file=os.path.join(local_path, file_name), mode="rb") as data:
+        file_client.upload_data(data, overwrite=True)
+
+def download_file_from_directory(directory_client: DataLakeDirectoryClient, local_path: str, file_name: str):
+    file_client = directory_client.get_file_client(file_name)
+
+    with open(file=os.path.join(local_path, file_name), mode="wb") as local_file:
+        download = file_client.download_file()
+        local_file.write(download.readall())
+        local_file.close()
+
+# MARKDOWN ********************
+
+# ## Get Secrets from Key Vault
+
+# CELL ********************
+
+# TODO: set up key vault and get secrets
+
+client_id = "e15fadf9-bc05-4ade-af9f-d79a918bbacd"
+client_secret = "gCa8Q~w9zuEnkl9SBCo7OXcwriGBA7C26nGTIdzs"
+tenant_id = "0b69ab40-1bc7-4666-9f20-691ba105a907"
+workspace_name = "FabricMonitor"
+outputPath = "./Data"
+
 # MARKDOWN ********************
 
 # # Authentication Credentials
@@ -89,32 +170,46 @@ def get_context():
 
 # CELL ********************
 
-sp = config.get("ServicePrincipal")
-client_id = sp.get("AppId")
-client_secret = sp.get("AppSecret")
-tenant_id = sp.get("TenantId")
 outputBatchCount = 5000
-outputPath = config.get("OutputPath")
 api_root = "https://api.powerbi.com/v1.0/myorg/"
 
 # MARKDOWN ********************
 
-# ## Get Modified Workspaces  
+# ## Get Modified Activities since last run date
 # 
 # Get the lastRun date that is written in the state file. this date will be used to get workspaces that have been modified after the recorded date
 # 
-
+# ```
+# activity = dict()
+# activity["lastRun"]= (datetime.now() + timedelta(days=-15)).strftime('%Y-%m-%dT%H:%M:%SZ')
+# 
+# 
+# with open('settings.json', 'w') as file:
+#     file.write(json.dumps(activity))
+# ```
 
 # CELL ********************
 
-# TODO: Fix this to use the lastRun date stored in the state.json file
+# TODO: check if state.json exists, if not one can make it and add the current date
 
-lastRun = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-pivotDate = lastRun + timedelta(days=-30)
 
-#lastRun.strftime("%Y-%m-%dT%H:%M:%SZ")
-lastRun.strftime("%Y-%m-%d") + "T00:00:00"
-lastRun
+fsc = get_file_system_client(tenant_id=tenant_id, client_id=client_id, client_secret=client_secret, workspace_name=workspace_name)
+
+dc = create_directory_client(fsc, path="FabricLake.Lakehouse/Files/activity/")
+upload_file_to_directory(directory_client=dc,local_path= "./", file_name="settings.json")
+
+# CELL ********************
+
+download_file_from_directory(directory_client=dc, local_path="./",file_name="settings.json")
+
+with open("settings.json", "r") as file:
+    config = json.loads(file.read())
+
+lastRun = config.get("lastRun")
+
+lastRun_tm = convert(lastRun)
+pivotDate = lastRun_tm + timedelta(days=-30)
+
 
 # MARKDOWN ********************
 
@@ -260,27 +355,6 @@ else:
 
 # CELL ********************
 
-from azure.identity import DefaultAzureCredential
-
-# Create a credential object
-credential = DefaultAzureCredential()
-
-# Use the credential to authenticate to Azure
-# Replace 'Storage' with the desired resource type
-token = credential.get_token("https://storage.azure.com")
-
-# Access the token value
-access_token = token.token
-
-# Now you can use the access_token as needed
-# For example, you can print it
-print(access_token)
-
-os.listdir()
-
-
-# CELL ********************
-
 #api_url = "https://api.powerbi.com/v1.0/myorg/admin/activityevents?startDateTime='2019-08-13T07:55:00'&endDateTime='2019-08-13T08:55:00'"
 api_url = "https://api.powerbi.com/v1.0/myorg/admin/activityevents?startDateTime='2024-01-15T00:00:00'&endDateTime='2024-01-15T23:59:00'"
 response = requests.get(api_url, headers=headers)
@@ -312,84 +386,6 @@ else:
 
 # CELL ********************
 
-# Define the authority URL
-authority_url = f"https://login.microsoftonline.com/{tenant_id}"
-
-print(f"Authority URL: {authority_url}")
-
-# Define the resource URL
-resource_url = "https://analysis.windows.net/powerbi/api"
-
-# Define the API endpoint to get the list of workspaces that have been modified
-api_url = "https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified"
-# Create an instance of the AuthenticationContext
-context = AuthenticationContext(authority_url)
-
-# Acquire an access token using the client credentials
-token = context.acquire_token_with_client_credentials(resource_url, client_id, client_secret)
-print(f"Token: {token}")
-# Check if the token acquisition was successful
-if 'accessToken' in token:
-    access_token = token['accessToken']
-    
-    # Make a GET request to the API with the access token
-    headers = {'Authorization': f'Bearer {access_token}'}
-    response = requests.get(api_url, headers=headers)
-    
-    # Check if the request was successful
-    if response.status_code == 200:
-        # Convert the JSON response to a pandas DataFrame
-        data = response.json()
-        for workspace in data:
-            print(workspace.get("id"))
-        
-    else:
-        # Handle the error case
-        print(f"Error: {response.status_code} - {response.text}")
-else:
-    # Handle the authentication error
-    print(f"Authentication failed: {token.get('error')}")
-
-
-# CELL ********************
-
-def create_file_system_client(service_client, file_system_name: str) -> FileSystemClient:
-    file_system_client = service_client.get_file_system_client(file_system=file_system_name)
-    return file_system_client
-
-def create_directory_client(file_system_client: FileSystemClient, path: str) -> DataLakeDirectoryClient:
-    directory_client = file_system_client.get_directory_client(path)
-    return directory_client
-
-def list_directory_contents(file_system_client: FileSystemClient, directory_name: str):
-    paths = file_system_client.get_paths(path=directory_name)
-    for path in paths:
-        print(path.name + '\n')
-
-
-# CELL ********************
-
-from azure.identity import ClientSecretCredential
-from azure.storage.filedatalake import FileSystemClient
-
-cred = ClientSecretCredential(tenant_id=tenant_id,
-                              client_id=client_id,
-                              client_secret=client_secret)
-
-file_system_client = FileSystemClient(
-    account_url="https://onelake.dfs.fabric.microsoft.com",
-    file_system_name="FabricMonitor",
-    credential=cred)
-paths = file_system_client.get_paths(path="/FabricLake.Lakehouse/Files/")
-for p in paths:
-    print(p.name)
-
-# CELL ********************
-
-file_system_client
-
-# CELL ********************
-
 target_folder_path = "/FabricLake.Lakehouse/Files/activity/"
 
 # Create the target folder if it doesn't exist
@@ -397,38 +393,3 @@ file_system_client.create_directory(target_folder_path)
 
 # Get the DataLakeDirectoryClient for the target folder
 directory_client = file_system_client.get_directory_client(target_folder_path)
-
-# CELL ********************
-
-create_path("activity/event/")
-
-# CELL ********************
-
-with open("activity/event/config.json", "w") as file:
-    file.write(json.dumps(config))
-
-# CELL ********************
-
-# Upload the local file to the target folder
-
-with open(local_file_path, "rb") as file:
-    file_contents = file.read()
-    file_client = directory_client.create_file(file_name)
-    file_client.append_data(data=file_contents, offset=0, length=len(file_contents))
-    file_client.flush_data(len(file_contents))
-
-print("File uploaded successfully.")
-
-
-# CELL ********************
-
-
-
-
-# CELL ********************
-
-def upload_file_to_directory(self, directory_client: DataLakeDirectoryClient, local_path: str, file_name: str):
-    file_client = directory_client.get_file_client(file_name)
-
-    with open(file=os.path.join(local_path, file_name), mode="rb") as data:
-        file_client.upload_data(data, overwrite=True)
