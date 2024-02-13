@@ -25,31 +25,6 @@
 
 # ## Get Secrets whether from Key Vault or config.json
 
-# CELL ********************
-
-config = {
-  "OutputPath": "./Data",
-  "StorageAccountContainerRootPath": "",
-  "StorageAccountConnStr": "DefaultEndpointsProtocol=https;AccountName=powerbimonitor91ed;AccountKey=KIFypgGgseWdcevH6RfBxo6cbmf9h1aGBqJTp1z9Rd7vPHL0DXWojFlIDu6dOlfCbBg53xWL4wgv+AStISnOAg==;EndpointSuffix=core.windows.net",
-  "StorageAccountContainerName": "pbimonitor",
-  "FullScanAfterDays": "30",
-  "CatalogGetInfoParameters": "lineage=true&datasourceDetails=true&getArtifactUsers=true&datasetSchema=true&datasetExpressions=true",
-  "CatalogGetModifiedParameters": "excludePersonalWorkspaces=false&excludeInActiveWorkspaces=true",
-  "ServicePrincipal": {
-    "AppId": "e15fadf9-bc05-4ade-af9f-d79a918bbacd",
-    "AppSecret": "gCa8Q~w9zuEnkl9SBCo7OXcwriGBA7C26nGTIdzs",
-    "TenantId": "0b69ab40-1bc7-4666-9f20-691ba105a907",
-    "Environment": "Public"
-  },
-  "Subscription_ID": "4465cf7c-8bde-41f8-aa38-938da8ac30a9",
-  "Subscription_Name": "ME-MngEnvMCAP084084-brcampb-1",
-  "Function_App_Plan_Name": "coding-forge-app-plan",
-  "Resource_Group_Name": "Coding-Forge",
-  "LastRun": "2024-01-08",
-  "GraphExtractGroups": "false",
-  "GraphPaginateCount": 10000
-}
-
 # MARKDOWN ********************
 
 # ## Python packages to be used in the notebook
