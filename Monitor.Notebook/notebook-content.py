@@ -43,19 +43,20 @@ from azure.identity import ClientSecretCredential
 from azure.storage.filedatalake import FileSystemClient, DataLakeDirectoryClient
 
 
+# CELL ********************
+
+UTC_FORMAT="%Y-%m-%dT%H:%M:%SZ"
+
 # MARKDOWN ********************
 
 # ### Utility functions
 # 
 # Until I can figure out where to put my utility or have a class this section will do  
 # 
-# #### Using File System Client  
-# 
-# To work with files on lakehouse or warehouse see examples
-# 
-# using service principals with fabric lakehouse and warehouse 
-# 
-# [Fabric Service Principals](https://debruyn.dev/2023/how-to-use-service-principal-authentication-to-access-microsoft-fabrics-onelake/)
+# > To work with files on lakehouse or warehouse see examples  
+# > using service principals with fabric lakehouse and warehouse  
+# > [Fabric Service Principals](https://debruyn.dev/2023/how-to-use-service-principal-authentication-to-access-microsoft-fabrics-onelake/)  
+# > [Microsoft Docs](https://github.com/MicrosoftDocs/fabric-docs/blob/main/docs/onelake/onelake-access-python.md)  
 # 
 # ```
 #     paths = file_system_client.get_paths(path=f"/{lakehouse name}.Lakehouse/Files/")
@@ -116,7 +117,7 @@ class FabricFiles:
         self.client_id = client_id
         self.client_secret = client_secret
         self.workspace_name = workspace_name
-        self.fsc = get_file_system_client(client_id, client_secret, tenant_id, workspace_name)
+        self.fsc = self.get_file_system_client(client_id, client_secret, tenant_id, workspace_name)
             
 
     def get_file_system_client(self, client_id, client_secret, tenant_id, workspace_name) -> FileSystemClient:
@@ -144,6 +145,11 @@ class FabricFiles:
         for path in paths:
             print(path.name + '\n')
 
+    def create_directory(self, file_system_client: FileSystemClient, directory_name: str) -> DataLakeDirectoryClient:
+        directory_client = file_system_client.create_directory(directory_name)
+
+        return directory_client            
+
     def upload_file_to_directory(self, directory_client: DataLakeDirectoryClient, local_path: str, file_name: str):
         file_client = directory_client.get_file_client(file_name)
 
@@ -157,6 +163,8 @@ class FabricFiles:
             download = file_client.download_file()
             local_file.write(download.readall())
             local_file.close()
+
+    
 
 ## data retreival from lakehouse
 
@@ -212,7 +220,8 @@ def get_state(path, file_name="state.json"):
             with open(file_name, 'w') as file:
                 file.write(json.dumps(cfg))
 
-            FF.upload_file_to_directory(directory_client=dc,local_path= "./", file_name="settings.json")                
+            folder = FF.create_directory(file_system_client=FF.fsc, directory_name=path)    
+            FF.upload_file_to_directory(directory_client=folder,local_path= "./", file_name=file_name)                
 
             return json.dumps(cfg)
         except Exception as e:
@@ -272,6 +281,10 @@ else:
 lastRun_tm = convert(lastRun)
 pivotDate = lastRun_tm + timedelta(days=-30)
 
+
+# CELL ********************
+
+config
 
 # MARKDOWN ********************
 
@@ -382,36 +395,12 @@ lastFullScan_tm = convert(LastFullScan)
 pivotScan = lastRun_tm + timedelta(days=-30)
 pivotFullScan = lastFullScan_tm + timedelta(days=-30)
 
-# CELL ********************
-
-snapshots =f"{lakehouse_name}.Lakehouse.Files/catalog/snapshots/{today.strftime('%Y')}/{today.strftime('%m')}"
-snapshots
-
 # MARKDOWN ********************
 
 # ### Get Catalog Apps Information
 # 
 # [Get admin/apps](https://learn.microsoft.com/en-us/rest/api/power-bi/admin/apps-get-apps-as-admin) 
 
-
-# CELL ********************
-
-FF = FabricFiles(
-    tenant_id=tenant_id,
-    client_id=client_id,
-    client_secret=client_secret,
-    workspace_name=workspace_name
-)
-
-# CELL ********************
-
-paths = FF.fsc.get_paths(path=snapshots)
-try:
-    for p in paths:
-        print(p.name)
-except Exception as e:
-    if "BadRequest" in str(e):
-        print("not found")
 
 # CELL ********************
 
@@ -422,7 +411,7 @@ catalog_types = ["scan","snapshots"]
 today = datetime.now()
 
 scans = f"{lakehouse_name}.Lakehouse.Files/catalog/scan/{today.strftime('%Y')}/{today.strftime('%m')}"
-snapshots =f"snapshots/{today.strftime('%Y')}/{today.strftime('%m')}"
+snapshots =f"snapshots/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
 #snapshots =f"{lakehouse_name}.Lakehouse.Files/catalog/snapshots/{today.strftime('%Y')}/{today.strftime('%m')}"
 
 FF = FabricFiles(
@@ -455,74 +444,317 @@ response = requests.get(url=url, headers=headers)
 if response.status_code == 200:
     result = response.json()
 
-    
+    found=False
+
     if not os.path.exists(filePath):
         #scanOutputPath = create_path()
         # you need to add the trailing / to make sure the last part is made a folder
-        snapshotOutputPath = create_path(f"{snapshots}/")
+        snapshotOutputPath = create_path(f"{snapshots}")
 
-        print(snapshotOutputPath)
 
         with open(filePath, 'w') as file:
             file.write(json.dumps(result))
 
         lakehouse_dir = f"{lakehouse_name}.Lakehouse/Files/catalog/{snapshots}"
+        print(f"What if the folder path: {lakehouse_dir}")
 
         # TODO: this works up to here in that it creates a local file that will then be uploaded to Files
         try:
-            FF.list_directory_contents(file_system_client=fsc, directory_name=lakehouse_dir)
-        except Exception as e:
-            if "BadRequest" in str(e):
-                print("Directory could not be found on Lakehouse")
-                dc = FF.create_directory_client(file_system_client=FF.fsc, path=lakehouse_dir)
+            FF.list_directory_contents(file_system_client=FF.fsc, directory_name=lakehouse_dir)
 
+            paths = FF.fsc.get_paths(lakehouse_dir)
+            for path in paths:
+                if "app.json" in path:
+                    found = True
+                else:
+                    found = False
+
+# TODO: create a function that will check if a file exists in the specified directory
+            if not found:
                 try:
-                    FF.upload_file_to_directory(directory_client=dc,local_path=snapshots, file_name="app.json")    
+                    FF.upload_file_to_directory(directory_client=folder,local_path=snapshots, file_name="apps.json")    
                 except Exception as e:
                     print(e)
+
+        except Exception as e:
+            if "BadRequest" in str(e) or "The specified path does not exist" in str(e):
+                print("Directory could not be found on Lakehouse")
+                #dc = FF.create_directory_client(file_system_client=FF.fsc, path=lakehouse_dir)
+                folder = FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
+                try:
+                    FF.upload_file_to_directory(directory_client=folder,local_path=snapshots, file_name="apps.json")    
+                except Exception as e:
+                    print(e)
+            else:
+                print("something else", str(e))
 else:
     print(f"Did not get data", str(response.status_code))
 
-# TODO: scan workspaces that were modified
-# TODO: determine if fullscan is required
+
+# MARKDOWN ********************
+
+# ## Get Catalog Scan
+# 
+# use the API to get scans or full scans  
+# modify the following two variables `getInfoDetails` and `getModifiedWorkspaceParams` to alter the data being recorded
+
+# CELL ********************
+
+getInfoDetails = "lineage=true&datasourceDetails=true&getArtifactUsers=true&datasetSchema=false&datasetExpressions=false"
+getModifiedWorkspacesParams = "excludePersonalWorkspaces=False&excludeInActiveWorkspaces=False"
+FullScanAfterDays = 30
+reset  = True
+
+# CELL ********************
+
+from dateutil.parser import parse
+
+def is_date(string, fuzzy=False):
+    """
+    Return whether the string can be interpreted as a date.
+
+    :param string: str, string to check for date
+    :param fuzzy: bool, ignore unknown tokens in string if True
+    """
+    try: 
+        parse(string, fuzzy=fuzzy)
+        return True
+
+    except ValueError:
+        return False
+
+# MARKDOWN ********************
+
+# #### Figure out if we need to run a full scan
+# 
+# check to see if the `lastScan` and `lastFullScan` differ by 30 days or more.  
+# If the remainder is greater than 30 then set `modifiedLastScan` to the minimum allowed  
+# date of `Now() -30 days`. Also check to make sure the `lastScan` is not older than 30  
+# days from the current date
+# 
+# **NOTE:** The date for `modifiedLastRun` must be in ISO-8601 format. _DO NOT DEVIATE_  `datetime.now().isoformat()` does not work as it leaves off the milliseconds
+# ```
+# 2024-01-15T13:31:44.0000000Z
+# ```
 
 
 # CELL ********************
 
-import shutil
-shutil.rmtree(snapshots)
+fullScan = False
 
-# CELL ********************
+if is_date(LastRun) and is_date(LastFullScan):
+    daysSinceLastFullScan =  lastRun_tm - lastFullScan_tm
 
-os.listdir(snapshots)
-
-# CELL ********************
-
-#api_url = "https://api.powerbi.com/v1.0/myorg/admin/activityevents?startDateTime='2019-08-13T07:55:00'&endDateTime='2019-08-13T08:55:00'"
-api_url = "https://api.powerbi.com/v1.0/myorg/admin/activityevents?startDateTime='2024-01-15T00:00:00'&endDateTime='2024-01-15T23:59:00'"
-response = requests.get(api_url, headers=headers)
-
-# Check if the request was successful
-if response.status_code == 200:
-    # Convert the JSON response to a pandas DataFrame
-    data = response.json()
-    
+if daysSinceLastFullScan.days > FullScanAfterDays:
+        fullScan = True
 else:
-    # Handle the error case
-    print(f"Error: {response.status_code} - {response.text}")
+    print(f"Days to next full scan {FullScanAfterDays - daysSinceLastFullScan.days}")
+
+if not fullScan:
+    if (datetime.now() - lastRun_tm).days > 30:
+        print("Cannot scan past 30 days. Will update lastrun to minimum allowable days")
+        modifiedLastRun = (datetime.now() + timedelta(days=-30)).isoformat()
+    else:
+        modifiedLastRun = lastRun_tm.isoformat()+".0000000Z"
+        
+
+parameters = f"modifiedSince={modifiedLastRun}&" + getModifiedWorkspacesParams 
+
+# MARKDOWN ********************
+
+# ### Get Modified Workspaces since last scan  
+# 
+# Supporting Documentation: [Modified Workspaces](https://learn.microsoft.com/en-us/rest/api/power-bi/admin/workspace-info-get-modified-workspaces)
+# 
+# ```
+# GET https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified?modifiedSince={modifiedSince}&excludePersonalWorkspaces={excludePersonalWorkspaces}&excludeInActiveWorkspaces={excludeInActiveWorkspaces}  
+# 
+# GET https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified?modifiedSince=2020-10-02T05:51:30.0000000Z&excludePersonalWorkspaces=True&excludeInActiveWorkspaces=True
+# ```
 
 # CELL ********************
 
-api_url = "https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified"
-response = requests.get(api_url, headers=headers)
+rest_api = "admin/workspaces/modified?"
+url = api_root + rest_api + parameters
+
+#api_url="https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified?modifiedSince=2024-01-15T13:31:44.0000000Z&excludePersonalWorkspaces=false&excludeInActiveWorkspaces=true"
+#response = requests.get(api_url, headers=headers)
+response = requests.get(url, headers=headers)
+
+throttleErrorSleepSeconds = 3700
+scanStatusSleepSeconds = 5
+getInfoOuterBatchCount = 1500
+getInfoInnerBatchCount = 100       
+
+workspaces = list()
 
 # Check if the request was successful
 if response.status_code == 200:
     # Convert the JSON response to a pandas DataFrame
     data = response.json()
     for workspace in data:
-        print(workspace.get("id"))
-    
+        workspaces.append(workspace.get("id"))
+   
+else:
+    # Handle the error case
+    print(f"Error: {response.status_code} - {response.text}")
+
+# MARKDOWN ********************
+
+# ## Get Workspace Info
+# 
+# Supporting document: [admin/workspace-info](https://learn.microsoft.com/en-us/rest/api/power-bi/admin/workspace-info-post-workspace-info)
+# 
+# > API URL with method
+# ```
+# POST https://api.powerbi.com/v1.0/myorg/admin/workspaces/getInfo?lineage=True&datasourceDetails=True&datasetSchema=True&datasetExpressions=True
+# ```
+# >Request body
+# 
+# ```
+# {
+#   "workspaces": [
+#     "97d03602-4873-4760-b37e-1563ef5358e3",
+#     "67b7e93a-3fb3-493c-9e41-2c5051008f24"
+#   ]
+# }
+# ```
+
+# CELL ********************
+
+# check to see if any of the workspaces have been modified
+# the list will have all the workspace ids that have been modified within the specified date range
+
+rest_api ="admin/workspaces/getInfo?lineage=True&datasourceDetails=True&datasetSchema=True&datasetExpressions=True"
+url = api_root + rest_api
+
+if workspaces:
+    body = {
+        "workspaces":workspaces
+    }
+
+    response = requests.post(url=url, headers=headers, json=body)    
+    if response.status_code==202:
+        result = response.json()
+
+
+
+
+# CELL ********************
+
+result
+
+# CELL ********************
+
+import time
+
+def waitOn429Error(script:str, sleepSeconds:int=3601, tentatives:int=1):
+    try:
+        
+        #Invoke-Command -ScriptBlock $script
+        exec(script)
+
+    except Exception as e:
+        ex = str(e)
+
+        errors = [
+            "*Error reading JObject from JsonReader*",
+            "*Response status code does not indicate success: *",
+            "*429 (Too Many Requests)*",
+            "*You have exceeded the amount of requests allowed*"
+        ]    
+        errorText = ex
+        ## If code errors at this location it is likely due to a 429 error. The PowerShell comandlets do not handle 429 errors with the appropriate message. This code will cover the known errors codes.
+        if errorText in errors:
+            tentatives -= 1
+
+            if tentatives < 0:
+               throw "[Wait-On429Error] Max Tentatives reached!"    
+            else:
+                time.sleep(sleepSeconds)
+                waitOn429Error(script=script, sleepSeconds=sleepSeconds, tentatives=tentatives)            
+        else:
+            throw
+
+# MARKDOWN ********************
+
+# $modifiedRequestUrl = "admin/workspaces/modified?$getModifiedWorkspacesParams"
+# 
+#     Write-Host "Reset: $reset"
+#     Write-Host "Since: $($state.Catalog.LastRun)"
+#     Write-Host "FullScan: $fullScan"
+#     Write-Host "Last FullScan: $($state.Catalog.LastFullScan)"
+#     Write-Host "FullScanAfterDays: $($config.FullScanAfterDays)"
+#     Write-Host "GetModified parameters '$getModifiedWorkspacesParams'"
+#     Write-Host "GetInfo parameters '$getInfoDetails'"
+#     
+#     # Get Modified Workspaces since last scan (Max 30 per hour)
+#     
+#     $workspacesModified = Invoke-PowerBIRestMethod -Url $modifiedRequestUrl -Method Get | ConvertFrom-Json
+# 
+#     if (!$workspacesModified -or $workspacesModified.Count -eq 0) {
+#         Write-Host "No workspaces modified"
+#     }
+#     else {
+#         Write-Host "Modified workspaces: $($workspacesModified.Count)"    
+# 
+#         $throttleErrorSleepSeconds = 3700
+#         $scanStatusSleepSeconds = 5
+#         $getInfoOuterBatchCount = 1500
+#         $getInfoInnerBatchCount = 100        
+# 
+#         Write-Host "Throttle Handling Variables: getInfoOuterBatchCount: $getInfoOuterBatchCount;  getInfoInnerBatchCount: $getInfoInnerBatchCount; throttleErrorSleepSeconds: $throttleErrorSleepSeconds"
+#         # postworkspaceinfo only allows 16 parallel requests, Get-ArrayInBatches allows to create a two level batch strategy. It should support initial load without throttling on tenants with ~50000 workspaces
+#         # Call Get-ArrayInBatches from the Utils.psm1 module and execute the content of the script block 
+#         Get-ArrayInBatches -array $workspacesModified -label "GetInfo Global Batch" -batchCount $getInfoOuterBatchCount -script {
+#     
+
+# CELL ********************
+
+#api_url = "https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified"
+
+api_url="https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified?modifiedSince=2024-01-15T13:31:44.0000000Z&excludePersonalWorkspaces=false&excludeInActiveWorkspaces=true"
+response = requests.get(api_url, headers=headers)
+
+# Check if the request was successful
+if response.status_code == 200:
+    # Convert the JSON response to a pandas DataFrame
+    data = response.json()
+
+    # begin the looping proces of workspace scan using the id
+    for workspace_id in data:
+        print(workspace_id)
+
+
+        Get-ArrayInBatches -array $workspacesModified -label "GetInfo Global Batch" -batchCount $getInfoOuterBatchCount -script {
+            param($workspacesModifiedOuterBatch, $i)
+                                            
+            $script:workspacesScanRequests = @()
+
+            # Call GetInfo in batches of 100 (MAX 500 requests per hour)
+            Get-ArrayInBatches -array $workspacesModifiedOuterBatch -label "GetInfo Local Batch" -batchCount $getInfoInnerBatchCount -script {
+                param($workspacesBatch, $x)
+                
+                Wait-On429Error -tentatives 1 -sleepSeconds $throttleErrorSleepSeconds -script {
+                    
+                    $bodyStr = @{"workspaces" = @($workspacesBatch.Id) } | ConvertTo-Json
+        
+                    # $script: scope to reference the outerscope variable
+
+                    $getInfoResult = @(Invoke-PowerBIRestMethod -Url "admin/workspaces/getInfo?$getInfoDetails" -Body $bodyStr -method Post | ConvertFrom-Json)
+
+                    $script:workspacesScanRequests += $getInfoResult
+
+                }
+            }                
+
+
+
+
+
+
+
+
 else:
     # Handle the error case
     print(f"Error: {response.status_code} - {response.text}")
@@ -536,3 +768,225 @@ file_system_client.create_directory(target_folder_path)
 
 # Get the DataLakeDirectoryClient for the target folder
 directory_client = file_system_client.get_directory_client(target_folder_path)
+
+# MARKDOWN ********************
+
+# ### UTILITY
+# 
+# function Get-ArrayInBatches
+# {
+#     [cmdletbinding()]
+#     param
+#     (        
+#         [array]$array
+#         ,
+#         [int]$batchCount
+#         ,
+#         [ScriptBlock]$script
+#         ,
+#         [string]$label = "Get-ArrayInBatches"
+#     )
+# 
+#     $skip = 0
+#     
+#     $i = 0
+# 
+#     do
+#     {   
+#         $batchItems = @($array | Select-Object -First $batchCount -Skip $skip)
+# 
+#         if ($batchItems)
+#         {
+#             Write-Host "[$label] Batch: $($skip + $batchCount) / $($array.Count)"
+#             
+#             Invoke-Command -ScriptBlock $script -ArgumentList @($batchItems, $i)
+# 
+#             $skip += $batchCount
+#         }
+#         
+#         $i++
+#         
+#     }
+#     while($batchItems.Count -ne 0 -and $batchItems.Count -ge $batchCount)   
+# }
+# 
+# function Wait-On429Error
+# {
+#     [cmdletbinding()]
+#     param
+#     (        
+#         [ScriptBlock]$script
+#         ,
+#         [int]$sleepSeconds = 3601
+#         ,
+#         [int]$tentatives = 1
+#     )
+#  
+#     try {
+#         
+#         Invoke-Command -ScriptBlock $script
+# 
+#     }
+#     catch {
+# 
+#         $ex = $_.Exception
+#         
+#         $errorText = $ex.ToString()
+#         ## If code errors at this location it is likely due to a 429 error. The PowerShell comandlets do not handle 429 errors with the appropriate message. This code will cover the known errors codes.
+#         if ($errorText -like "*Error reading JObject from JsonReader*" -or ($errorText -like "*429 (Too Many Requests)*" -or $errorText -like "*Response status code does not indicate success: *" -or $errorText -like "*You have exceeded the amount of requests allowed*")) {
+# 
+#             Write-Host "'429 (Too Many Requests)' Error - Sleeping for $sleepSeconds seconds before trying again" -ForegroundColor Yellow
+#             Write-Host "Printing Error for Logs: '$($errorText)'"
+#             $tentatives = $tentatives - 1
+# 
+#             if ($tentatives -lt 0)
+#             {            
+#                throw "[Wait-On429Error] Max Tentatives reached!"    
+#             }
+#             else
+#             {
+#                 Start-Sleep -Seconds $sleepSeconds
+#                 
+#                 Wait-On429Error -script $script -sleepSeconds $sleepSeconds -tentatives $tentatives            
+#             }
+#         }
+#         else {
+#             throw  
+#         }         
+#     }
+# }
+
+# MARKDOWN ********************
+
+#     #region Workspace Scans: 1 - Get Modified; 2 - Start Scan for modified; 3 - Wait for scan finish; 4 - Get Results
+#     $modifiedRequestUrl = "admin/workspaces/modified?$getModifiedWorkspacesParams"
+#     $workspacesModified = Invoke-PowerBIRestMethod -Url $modifiedRequestUrl -Method Get | ConvertFrom-Json
+# 
+#     if (!$workspacesModified -or $workspacesModified.Count -eq 0) {
+#         Write-Host "No workspaces modified"
+#     }
+#     else {
+#         Write-Host "Modified workspaces: $($workspacesModified.Count)"    
+# 
+#         $throttleErrorSleepSeconds = 3700
+#         $scanStatusSleepSeconds = 5
+#         $getInfoOuterBatchCount = 1500
+#         $getInfoInnerBatchCount = 100        
+# 
+#         Write-Host "Throttle Handling Variables: getInfoOuterBatchCount: $getInfoOuterBatchCount;  getInfoInnerBatchCount: $getInfoInnerBatchCount; throttleErrorSleepSeconds: $throttleErrorSleepSeconds"
+#         # postworkspaceinfo only allows 16 parallel requests, Get-ArrayInBatches allows to create a two level batch strategy. It should support initial load without throttling on tenants with ~50000 workspaces
+#         # Call Get-ArrayInBatches from the Utils.psm1 module and execute the content of the script block 
+#         Get-ArrayInBatches -array $workspacesModified -label "GetInfo Global Batch" -batchCount $getInfoOuterBatchCount -script {
+#             param($workspacesModifiedOuterBatch, $i)
+#                                             
+#             $script:workspacesScanRequests = @()
+# 
+#             # Call GetInfo in batches of 100 (MAX 500 requests per hour)
+#             Get-ArrayInBatches -array $workspacesModifiedOuterBatch -label "GetInfo Local Batch" -batchCount $getInfoInnerBatchCount -script {
+#                 param($workspacesBatch, $x)
+#                 
+#                 Wait-On429Error -tentatives 1 -sleepSeconds $throttleErrorSleepSeconds -script {
+#                     
+#                     $bodyStr = @{"workspaces" = @($workspacesBatch.Id) } | ConvertTo-Json
+#         
+#                     # $script: scope to reference the outerscope variable
+# 
+#                     $getInfoResult = @(Invoke-PowerBIRestMethod -Url "admin/workspaces/getInfo?$getInfoDetails" -Body $bodyStr -method Post | ConvertFrom-Json)
+# 
+#                     $script:workspacesScanRequests += $getInfoResult
+# 
+#                 }
+#             }                
+# 
+#             # Wait for Scan to execute - https://docs.microsoft.com/en-us/rest/api/power-bi/admin/workspaceinfo_getscanstatus (10,000 requests per hour)
+#             # Get successful scans
+#             while (@($workspacesScanRequests | Where-Object status -in @("Running", "NotStarted"))) {
+#                 Write-Host "Waiting for scan results, sleeping for $scanStatusSleepSeconds seconds..."
+#         
+#                 Start-Sleep -Seconds $scanStatusSleepSeconds
+#         
+#                 foreach ($workspaceScanRequest in $workspacesScanRequests) {    
+#                     try {
+#                         $scanStatus = Invoke-PowerBIRestMethod -Url "admin/workspaces/scanStatus/$($workspaceScanRequest.id)" -method Get | ConvertFrom-Json
+#                         Write-Host "Scan '$($scanStatus.id)' : '$($scanStatus.status)'"
+#                         $workspaceScanRequest.status = $scanStatus.status
+#                     }
+#                     catch [System.OutOfMemoryException] {
+#                         # Handle the OutOfMemoryException here
+#                         Write-Host "An OutOfMemoryException occurred: $_"
+#                     }
+#                 }
+#             }
+#         
+#             # Get Scan results (500 requests per hour) - https://docs.microsoft.com/en-us/rest/api/power-bi/admin/workspaceinfo_getscanresult    
+#             
+#             foreach ($workspaceScanRequest in $workspacesScanRequests) {   
+#                 Wait-On429Error -tentatives 1 -sleepSeconds $throttleErrorSleepSeconds -script {
+#                     
+#                     try {
+#                         Write-Host "Getting scan result for '$($workspaceScanRequest.id)'"
+#                         $scanResult = Invoke-PowerBIRestMethod -Url "admin/workspaces/scanResult/$($workspaceScanRequest.id)" -method Get | ConvertFrom-Json
+#                         Write-Host "Scan Result'$($scanStatus.id)' : '$($scanResult.workspaces.Count)'"
+#                     }
+#                     catch [System.OutOfMemoryException] {
+#                         Write-Host "ConvertFrom-Json failed with out of memory exception"
+#                         <#Do this if a terminating exception happens#>
+#                     }
+#             
+#                     $fullScanSuffix = ""
+# 
+#                     if ($fullScan) {              
+#                         $fullScanSuffix = ".fullscan"      
+#                     }
+#                     
+#                     $outputFilePath = "$scansOutputPath\$($workspaceScanRequest.id)$fullScanSuffix.json"
+#             
+#                     $scanResult | Add-Member –MemberType NoteProperty –Name "scanCreatedDateTime"  –Value $workspaceScanRequest.createdDateTime -Force
+#             
+#                     try{
+#                         Write-Host "Writing to '$outputFilePath'"
+#                         ConvertTo-Json $scanResult -Depth 10 -Compress | Out-File $outputFilePath -force
+# 
+#                     } catch [System.OutOfMemoryException] {
+#                         Write-Host "An OutOfMemoryException occurred: $_"
+#                         Write-Host "ConvertTo-Json failed for '$outputFilePath'"
+#                     }
+# 
+#                     # Save to Blob
+# 
+#                     if ($config.StorageAccountConnStr -and (Test-Path $outputFilePath)) {
+# 
+#                         Write-Host "Writing to Blob Storage"
+#                         
+#                         $storageRootPath = "$($config.StorageAccountContainerRootPath)/catalog"
+#             
+#                         Add-FileToBlobStorage -storageAccountConnStr $config.StorageAccountConnStr -storageContainerName $config.StorageAccountContainerName -storageRootPath $storageRootPath -filePath $outputFilePath -rootFolderPath $outputPath     
+# 
+#                         Remove-Item $outputFilePath -Force
+#                     }
+#                 }
+#             }
+#         }                        
+#     }
+# 
+#     #endregion
+# 
+#     # Save State
+# 
+#     Write-Host "Saving state"
+# 
+#     New-Item -Path (Split-Path $stateFilePath -Parent) -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+# 
+#     $state.Catalog.LastRun = [datetime]::UtcNow.Date.ToString("o")
+#     
+#     if ($fullScan) {        
+#         $state.Catalog.LastFullScan = [datetime]::UtcNow.Date.ToString("o")     
+#     }
+# 
+#     ConvertTo-Json $state | Out-File $stateFilePath -force -Encoding utf8
+# }
+# finally {
+#     $stopwatch.Stop()
+# 
+#     Write-Host "Ellapsed: $($stopwatch.Elapsed.TotalSeconds)s"
+# }
