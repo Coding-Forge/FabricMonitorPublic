@@ -109,44 +109,115 @@ def convert(date_time):
 
 ## Lakehouse File functions
 
-def get_file_system_client(tenant_id, client_id, client_secret, workspace_name) -> FileSystemClient:
-    cred = ClientSecretCredential(tenant_id=tenant_id,
-                                client_id=client_id,
-                                client_secret=client_secret)
+class FabricFiles:
 
-    file_system_client = FileSystemClient(
-        account_url="https://onelake.dfs.fabric.microsoft.com",
-        file_system_name=workspace_name,
-        credential=cred)
+    def __init__(self, tenant_id, client_id, client_secret, workspace_name):
+        self.tenant_id = tenant_id
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.workspace_name = workspace_name
+        self.fsc = get_file_system_client(client_id, client_secret, tenant_id, workspace_name)
+            
 
-    return file_system_client
+    def get_file_system_client(self, client_id, client_secret, tenant_id, workspace_name) -> FileSystemClient:
+        cred = ClientSecretCredential(tenant_id=tenant_id,
+                                    client_id=client_id,
+                                    client_secret=client_secret)
 
-def create_file_system_client(service_client, file_system_name: str) -> FileSystemClient:
-    file_system_client = service_client.get_file_system_client(file_system=file_system_name)
-    return file_system_client
+        file_system_client = FileSystemClient(
+            account_url="https://onelake.dfs.fabric.microsoft.com",
+            file_system_name=workspace_name,
+            credential=cred)
 
-def create_directory_client(file_system_client: FileSystemClient, path: str) -> DataLakeDirectoryClient:
-    directory_client = file_system_client.get_directory_client(path)
-    return directory_client
+        return file_system_client
 
-def list_directory_contents(file_system_client: FileSystemClient, directory_name: str):
-    paths = file_system_client.get_paths(path=directory_name)
-    for path in paths:
-        print(path.name + '\n')
+    def create_file_system_client(self, service_client, file_system_name: str) -> FileSystemClient:
+        file_system_client = service_client.get_file_system_client(file_system=file_system_name)
+        return file_system_client
 
-def upload_file_to_directory(directory_client: DataLakeDirectoryClient, local_path: str, file_name: str):
-    file_client = directory_client.get_file_client(file_name)
+    def create_directory_client(self, file_system_client: FileSystemClient, path: str) -> DataLakeDirectoryClient:
+        directory_client = file_system_client.get_directory_client(path)
+        return directory_client
 
-    with open(file=os.path.join(local_path, file_name), mode="rb") as data:
-        file_client.upload_data(data, overwrite=True)
+    def list_directory_contents(self, file_system_client: FileSystemClient, directory_name: str):
+        paths = file_system_client.get_paths(path=directory_name)
+        for path in paths:
+            print(path.name + '\n')
 
-def download_file_from_directory(directory_client: DataLakeDirectoryClient, local_path: str, file_name: str):
-    file_client = directory_client.get_file_client(file_name)
+    def upload_file_to_directory(self, directory_client: DataLakeDirectoryClient, local_path: str, file_name: str):
+        file_client = directory_client.get_file_client(file_name)
 
-    with open(file=os.path.join(local_path, file_name), mode="wb") as local_file:
-        download = file_client.download_file()
-        local_file.write(download.readall())
-        local_file.close()
+        with open(file=os.path.join(local_path, file_name), mode="rb") as data:
+            file_client.upload_data(data, overwrite=True)
+
+    def download_file_from_directory(self, directory_client: DataLakeDirectoryClient, local_path: str, file_name: str):
+        file_client = directory_client.get_file_client(file_name)
+
+        with open(file=os.path.join(local_path, file_name), mode="wb") as local_file:
+            download = file_client.download_file()
+            local_file.write(download.readall())
+            local_file.close()
+
+## data retreival from lakehouse
+
+def get_state(path, file_name="state.json"):
+    """
+    takes a path arguement as string 
+    takes a file_name as a string (optional parameter)
+    returns a json file that has information about the last run date
+    and scan dates
+    """
+    FF = FabricFiles(
+        tenant_id=tenant_id,
+        client_id=client_id,
+        client_secret=client_secret,
+        workspace_name=workspace_name
+    )
+
+
+    fsc = FF.fsc
+
+    paths = fsc.get_paths(path=path)
+
+    found = False
+
+    for p in paths:
+        if file_name in p.name:
+            found = True
+            break
+    
+    # create a directory client
+    dc = FF.create_directory_client(fsc, path=path)
+    
+    if found:
+        try:
+            
+            FF.download_file_from_directory(directory_client=dc, local_path="./",file_name=file_name)
+
+            with open(file_name, "r") as file:
+                config = json.loads(file.read())
+
+            return config
+        except Exception as e:
+            print("An exception occurred while reading the file:", str(e))
+    else:
+        cfg = dict()
+        if "catalog" in path:
+            cfg["lastRun"] = (datetime.now() + timedelta(days=-30)).strftime('%Y-%m-%dT%H:%M:%SZ')
+            cfg["lastFullScan"] = (datetime.now() + timedelta(days=-30)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        else:
+            cfg["lastRun"] = (datetime.now() + timedelta(days=-30)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        try:
+            with open(file_name, 'w') as file:
+                file.write(json.dumps(cfg))
+
+            FF.upload_file_to_directory(directory_client=dc,local_path= "./", file_name="settings.json")                
+
+            return json.dumps(cfg)
+        except Exception as e:
+            print("An exception occurred while creating file:", str(e))
+
 
 # MARKDOWN ********************
 
@@ -160,6 +231,7 @@ client_id = "e15fadf9-bc05-4ade-af9f-d79a918bbacd"
 client_secret = "gCa8Q~w9zuEnkl9SBCo7OXcwriGBA7C26nGTIdzs"
 tenant_id = "0b69ab40-1bc7-4666-9f20-691ba105a907"
 workspace_name = "FabricMonitor"
+lakehouse_name = "FabricLake"
 outputPath = "./Data"
 
 # MARKDOWN ********************
@@ -190,22 +262,12 @@ api_root = "https://api.powerbi.com/v1.0/myorg/"
 
 # CELL ********************
 
-# TODO: check if state.json exists, if not one can make it and add the current date
-
-
-fsc = get_file_system_client(tenant_id=tenant_id, client_id=client_id, client_secret=client_secret, workspace_name=workspace_name)
-
-dc = create_directory_client(fsc, path="FabricLake.Lakehouse/Files/activity/")
-upload_file_to_directory(directory_client=dc,local_path= "./", file_name="settings.json")
-
-# CELL ********************
-
-download_file_from_directory(directory_client=dc, local_path="./",file_name="settings.json")
-
-with open("settings.json", "r") as file:
-    config = json.loads(file.read())
-
-lastRun = config.get("lastRun")
+# get the information from state.json
+config = get_state(f"/{lakehouse_name}.Lakehouse/Files/activity/")
+if isinstance(config, str):
+    lastRun = json.loads(config).get("lastRun")
+else:
+    lastRun = config.get("lastRun")
 
 lastRun_tm = convert(lastRun)
 pivotDate = lastRun_tm + timedelta(days=-30)
@@ -292,37 +354,66 @@ def get_activity():
 
         pivotDate += timedelta(days=1)
 
-# CELL ********************
-
-def get_state():
-    with open("state.json", "r") as file:
-        json_data = file.read()
-
-    # Parse JSON data
-    data = json.loads(json_data)
-    return data
-
 # MARKDOWN ********************
 
-# ## Get Catalog information
+# ### Get Configuration data for Catalog Scan
+# 
+# > We need to get the values for lastRun and lastFullScan  
+# > If the json file does not exist then we need to create it  
+# >and save it in the appropriate folder
+# 
+# > This is the catalog folder
 
 # CELL ********************
 
 # TODO: see if state.json exists on the blob storage 
-if os.path.exists("state.json"):
-    state = get_state()
+
+config = get_state(f"/{lakehouse_name}.Lakehouse/Files/catalog/")
+if isinstance(config, str):
+    LastRun = json.loads(config).get("lastRun")
+    LastFullScan = json.loads(config).get("lastFullScan")
 else:
-    state = {
-        "LastRun": "2024-02-01T00:00:00",
-        "LastFullScan": "2024-01-15T00:00:00"
-    }
+    LastRun = config.get("lastRun")
+    LastFullScan = config.get("lastFullScan")
 
-    with open("state.json",'w') as file:
-        file.write(json.dumps(state))
+lastRun_tm = convert(LastRun)
+lastFullScan_tm = convert(LastFullScan)
 
-print(state)
+pivotScan = lastRun_tm + timedelta(days=-30)
+pivotFullScan = lastFullScan_tm + timedelta(days=-30)
 
-# TODO: see if catalog last run is present
+# CELL ********************
+
+snapshots =f"{lakehouse_name}.Lakehouse.Files/catalog/snapshots/{today.strftime('%Y')}/{today.strftime('%m')}"
+snapshots
+
+# MARKDOWN ********************
+
+# ### Get Catalog Apps Information
+# 
+# [Get admin/apps](https://learn.microsoft.com/en-us/rest/api/power-bi/admin/apps-get-apps-as-admin) 
+
+
+# CELL ********************
+
+FF = FabricFiles(
+    tenant_id=tenant_id,
+    client_id=client_id,
+    client_secret=client_secret,
+    workspace_name=workspace_name
+)
+
+# CELL ********************
+
+paths = FF.fsc.get_paths(path=snapshots)
+try:
+    for p in paths:
+        print(p.name)
+except Exception as e:
+    if "BadRequest" in str(e):
+        print("not found")
+
+# CELL ********************
 
 # TODO: make sure the path exists for the data to be written to {scans, snapshots}
 
@@ -330,28 +421,80 @@ catalog_types = ["scan","snapshots"]
 
 today = datetime.now()
 
-scanOutputPath = create_path("scan/{}/{}/".format(today.strftime('%Y'), today.strftime('%m')))
-snapshotOutputPath = create_path("snapshots/{}/{}/".format(today.strftime('%Y'), today.strftime('%m')))
+scans = f"{lakehouse_name}.Lakehouse.Files/catalog/scan/{today.strftime('%Y')}/{today.strftime('%m')}"
+snapshots =f"snapshots/{today.strftime('%Y')}/{today.strftime('%m')}"
+#snapshots =f"{lakehouse_name}.Lakehouse.Files/catalog/snapshots/{today.strftime('%Y')}/{today.strftime('%m')}"
+
+FF = FabricFiles(
+    tenant_id=tenant_id,
+    client_id=client_id,
+    client_secret=client_secret,
+    workspace_name=workspace_name
+)
 
 
-# TODO: authenticate
+# CELL ********************
+
+headers = get_context()
+
+snapshotFiles = list()
 
 # TODO: get all the scans for apps
+filePath = f"{snapshots}/apps.json"
+snapshotFiles.append(filePath)
+
+
+rest_api = "admin/apps?$top=5000&$skip=0"
+
+url = api_root + rest_api
+print("What is the url {}".format(url))
+response = requests.get(url=url, headers=headers)
+   
+
+# check to see if the filepath already exists
+if response.status_code == 200:
+    result = response.json()
+
+    
+    if not os.path.exists(filePath):
+        #scanOutputPath = create_path()
+        # you need to add the trailing / to make sure the last part is made a folder
+        snapshotOutputPath = create_path(f"{snapshots}/")
+
+        print(snapshotOutputPath)
+
+        with open(filePath, 'w') as file:
+            file.write(json.dumps(result))
+
+        lakehouse_dir = f"{lakehouse_name}.Lakehouse/Files/catalog/{snapshots}"
+
+        # TODO: this works up to here in that it creates a local file that will then be uploaded to Files
+        try:
+            FF.list_directory_contents(file_system_client=fsc, directory_name=lakehouse_dir)
+        except Exception as e:
+            if "BadRequest" in str(e):
+                print("Directory could not be found on Lakehouse")
+                dc = FF.create_directory_client(file_system_client=FF.fsc, path=lakehouse_dir)
+
+                try:
+                    FF.upload_file_to_directory(directory_client=dc,local_path=snapshots, file_name="app.json")    
+                except Exception as e:
+                    print(e)
+else:
+    print(f"Did not get data", str(response.status_code))
 
 # TODO: scan workspaces that were modified
 # TODO: determine if fullscan is required
 
-pd = "abfs[s]://<workspace>@onelake.dfs.fabric.microsoft.com/<item>.<itemtype>/<path>/<fileName>"
-pp = "https://FabricMonitor@onelake.dfs.fabric.microsoft.com/FabricLake.Lakehouse/Files/catalog"
 
+# CELL ********************
 
+import shutil
+shutil.rmtree(snapshots)
 
-response = requests.put(pp, data=json.dumps(state),headers=headers)
-if response.status_code == 200:
-    print("success")
-else:
-    print(f"failed with status code {response.status_code}")
+# CELL ********************
 
+os.listdir(snapshots)
 
 # CELL ********************
 
