@@ -1,0 +1,25 @@
+{
+  "OutputPath": "",
+  "StorageAccountContainerRootPath": "",
+  "StorageAccountConnStr": "",
+  "StorageAccountContainerName": "",
+  "FullScanAfterDays": "30",
+  "CatalogGetInfoParameters": "lineage=true&datasourceDetails=true&getArtifactUsers=true&datasetSchema=true&datasetExpressions=true",
+  "CatalogGetModifiedParameters": "excludePersonalWorkspaces=false&excludeInActiveWorkspaces=true",
+  "ServicePrincipal": {
+    "AppId": "",
+    "AppSecret": "",
+    "TenantId": "",
+    "Environment": "Public"
+  },
+  "Subscription_ID": "",
+  "Subscription_Name": "",
+  "Function_App_Plan_Name": "",
+  "Resource_Group_Name": "",
+  "LastRun": "",
+  "GraphExtractGroups": "false",
+  "GraphPaginateCount": 10000,
+  "LakehouseName": "",
+  "WarehouseName": "",
+  "WorkspaceName": ""
+}
