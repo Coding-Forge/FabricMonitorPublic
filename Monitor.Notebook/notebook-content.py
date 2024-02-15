@@ -619,30 +619,80 @@ else:
 #   ]
 # }
 # ```
+# 
+# Supporting document: [admin/workspace-scanStatus](https://learn.microsoft.com/en-us/rest/api/power-bi/admin/workspace-info-get-scan-status)
+# 
+# > Successful response is code 200  
+# ```
+# {
+#   "id": "e7d03602-4873-4760-b37e-1563ef5358e3",
+#   "createdDateTime": "2020-06-15T16:46:28.0487687Z",
+#   "status": "Succeeded"
+# }
+# ```
 
 # CELL ********************
 
 # check to see if any of the workspaces have been modified
 # the list will have all the workspace ids that have been modified within the specified date range
+import time
+
 
 rest_api ="admin/workspaces/getInfo?lineage=True&datasourceDetails=True&datasetSchema=True&datasetExpressions=True"
 url = api_root + rest_api
 
 if workspaces:
+
     body = {
         "workspaces":workspaces
     }
 
+    workspaceScanResults = []
+
     response = requests.post(url=url, headers=headers, json=body)    
     if response.status_code==202:
         result = response.json()
+        workspaceScanResults.append(result)
+
+        for workspaceScanResult in workspaceScanResults:
+
+            while(workspaceScanResult.get("status") in ["Running", "NotStarted"]):
+            
+                print(f"Waiting for scan results, sleeping for {scanStatusSleepSeconds} seconds...")
+
+                time.sleep(scanStatusSleepSeconds)
+
+                rest_api = f"admin/workspaces/scanStatus/{workspaceScanResult.get('id')}"
+                url = api_root + rest_api
+
+                response = requests.get(url=url, headers=headers)
+                if response.status_code == 200:
+                    result = response.json()
+                    workspaceScanResult["status"] = result.get("status")
+
+            if "Succeeded" in workspaceScanResult["status"]:
+                id = workspaceScanResult.get("id")
+
+                rest_api = f"admin/workspaces/scanResult/{id}"
+                url = api_root + rest_api
+
+                response = requests.get(url=url, headers=headers)
+                if response.status_code == 200:
+                    scanResult = response.json()
+                
+                    print(scanResult)
+
+                    with open("scanResults.json",'w') as file:
+                        file.write(json.dumps(scanResult))
+
+                    today = datetime.utcnow()
+
+                    path = f"{lakehouse_name}.Lakehouse/Files/catalog/scans/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
+                    dc = FF.create_directory(file_system_client=FF.fsc, directory_name=path)
+                    FF.upload_file_to_directory(directory_client=dc, local_path=".", file_name="scanResults.json")
+                
 
 
-
-
-# CELL ********************
-
-result
 
 # CELL ********************
 
@@ -990,3 +1040,7 @@ directory_client = file_system_client.get_directory_client(target_folder_path)
 # 
 #     Write-Host "Ellapsed: $($stopwatch.Elapsed.TotalSeconds)s"
 # }
+
+# CELL ********************
+
+print("hello, world")
