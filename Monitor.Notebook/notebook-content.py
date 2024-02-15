@@ -405,7 +405,7 @@ catalog_types = ["scan","snapshots"]
 
 today = datetime.now()
 
-scans = f"{lakehouse_name}.Lakehouse.Files/catalog/scan/{today.strftime('%Y')}/{today.strftime('%m')}"
+scans = f"{lakehouse_name}.Lakehouse.Files/catalog/scan/{today.strftime('%Y')}/{today.strftime('%m')/}"
 snapshots =f"snapshots/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
 #snapshots =f"{lakehouse_name}.Lakehouse.Files/catalog/snapshots/{today.strftime('%Y')}/{today.strftime('%m')}"
 

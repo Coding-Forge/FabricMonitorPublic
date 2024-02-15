@@ -1,14 +1,26 @@
 import os
 import json
 import requests
+import logging
+
 from datetime import datetime, timedelta
 from adal import AuthenticationContext
-from fabric import File_Table_Management
+from ..utility.fabric import File_Table_Management
+
+logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
 class Bob:
-    def __init__(self, name):
-        with open('../../config.json', 'r') as file:
-            self.config = file.readlines()
+
+    def __init__(self):
+        with open('config.json', 'r') as file:
+            f = file.read()
+        
+        if isinstance(f, str):
+            self.app_settings = json.loads(f)
+        else:
+            self.app_settings = json.dumps(f)
+
+
 
     # create a path if it does not exist on the local machine
     def create_path(path):
@@ -25,9 +37,10 @@ class Bob:
         """
         Get the access token for the Power BI API
         """
-        tenant_id = self.config['tenant_id']
-        client_id = self.config['client_id']
-        client_secret = self.config['client_secret']
+        sp = self.app_settings['ServicePrincipal']
+        tenant_id = sp['TenantId']
+        client_id = sp['AppId']
+        client_secret = sp['AppSecret']
 
 
         # Define the authority URL
@@ -63,14 +76,23 @@ class Bob:
     
         return datetime_str
 
-    def get_state(path, file_name="state.json"):
+    def get_state(self, path, file_name="state.json"):
         """
         takes a path arguement as string 
         takes a file_name as a string (optional parameter)
         returns a json file that has information about the last run date
         and scan dates
         """
-        FF = File_Table_Management()
+
+        sp = self.app_settings['ServicePrincipal']
+
+        FF = File_Table_Management(
+            tenant_id=sp['TenantId'],
+            client_id=sp['AppId'],
+            client_secret=sp['AppSecret'],
+            workspace_name=self.app_settings['WorkspaceName']
+        )
+
         fsc = FF.fsc
 
         paths = fsc.get_paths(path=path)
@@ -85,13 +107,13 @@ class Bob:
         
         if found:
             try:
-                
                 FF.download_file_from_directory(directory_client=dc, local_path="./",file_name=file_name)
 
-                with open(file_name, "r") as file:
-                    config = json.loads(file.read())
+                with open(file_name, 'r') as file:
+                    f = file.read()
 
-                return config
+                return f
+                                                
             except Exception as e:
                 print("An exception occurred while reading the file:", str(e))
         else:
@@ -113,27 +135,34 @@ class Bob:
             except Exception as e:
                 print("An exception occurred while creating file:", str(e))
 
+    logging.info('Started')
 
-    def invokeAPI(self, rest_api, headers):
+    def invokeAPI(self, rest_api, headers=None):
         """
         Invoke a REST API
         url: str
         headers: dict
         """
-        if "admin" in rest_api:
-            api_root = "https://api.powerbi.com/v1.0/myorg/admin/"
-            headers = self.get_context()
-
-            url = api_root + rest_api
-            response = requests.get(url, headers=headers)
-
-        else:
+        if not headers:
             url = rest_api
             response = requests.get(url)
+        else:
+            api_root = "https://api.powerbi.com/v1.0/myorg/"
+            url = api_root + rest_api
+            
+            response = requests.get(url, headers=headers)
 
-        
-        
         if response.status_code in [200, 202]:
             return response.json()
         else:
             print(f"ERROR: {response.status_code} - {response.text}")   
+            logging.info(f"ERROR: {response.status_code} - {response.text}")
+    
+    logging.info('Finished')
+
+    def get_settings(self):
+        """
+        Get the settings from the config.json file
+        """
+        return self.app_settings
+    

@@ -1,18 +1,27 @@
 import os
+import json
 from azure.identity import ClientSecretCredential
 from azure.storage.filedatalake import FileSystemClient, DataLakeDirectoryClient
 
 class File_Table_Management:
 
     def __init__(self, tenant_id, client_id, client_secret, workspace_name):
-        with open('../config.json', 'r') as file:
-            self.config = file.readlines()
+        with open('config.json', 'r') as file:
+            f = file.read()
+        
+        if isinstance(f, str):
+            self.app_settings = json.loads(f)
+        else:
+            self.app_settings = json.dumps(f)
+
+        self.sp = self.app_settings['ServicePrincipal']
+
 
         self.fsc = self.get_file_system_client(
-            client_id=self.config['client_id'], 
-            client_secret=self.config['client_secret'], 
-            tenant_id=self.config['tenant_id'], 
-            workspace_name=self.config['workspace_name'])
+            client_id=self.sp['AppId'], 
+            client_secret=self.sp['AppSecret'], 
+            tenant_id=self.sp['TenantId'], 
+            workspace_name=self.app_settings['WorkspaceName'])
             
 
     def get_file_system_client(self, client_id, client_secret, tenant_id, workspace_name) -> FileSystemClient:
