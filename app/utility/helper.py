@@ -120,12 +120,20 @@ class Bob:
         url: str
         headers: dict
         """
-        api_root = "https://api.powerbi.com/v1.0/myorg/"
-        headers = self.get_context()
+        if "admin" in rest_api:
+            api_root = "https://api.powerbi.com/v1.0/myorg/admin/"
+            headers = self.get_context()
+
+            url = api_root + rest_api
+            response = requests.get(url, headers=headers)
+
+        else:
+            url = rest_api
+            response = requests.get(url)
+
         
-        url = api_root + rest_api
-        response = requests.get(url, headers=headers)
+        
         if response.status_code in [200, 202]:
             return response.json()
         else:
-            print(f"Error: {response.status_code} - {response.text}")   
+            print(f"ERROR: {response.status_code} - {response.text}")   

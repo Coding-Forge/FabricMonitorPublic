@@ -236,12 +236,7 @@ def get_state(path, file_name="state.json"):
 
 # TODO: set up key vault and get secrets
 
-client_id = "e15fadf9-bc05-4ade-af9f-d79a918bbacd"
-client_secret = "gCa8Q~w9zuEnkl9SBCo7OXcwriGBA7C26nGTIdzs"
-tenant_id = "0b69ab40-1bc7-4666-9f20-691ba105a907"
-workspace_name = "FabricMonitor"
-lakehouse_name = "FabricLake"
-outputPath = "./Data"
+
 
 # MARKDOWN ********************
 
