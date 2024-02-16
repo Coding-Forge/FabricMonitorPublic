@@ -12,7 +12,9 @@ logging.basicConfig(filename='myapp.log', level=logging.INFO)
 class Bob:
 
     def __init__(self):
-        with open('../../../config.json', 'r') as file:
+
+#        os.listdir("/home/brandon/projects/fabric/monitor/FabricMonitor/")
+        with open('/home/brandon/projects/fabric/monitor/FabricMonitor/config.json', 'r') as file:
             f = file.read()
         
         if isinstance(f, str):
@@ -28,6 +30,7 @@ class Bob:
         Create a path if it does not exist
         path: str
         """
+        logging.info(f"Creating path: {path}")
         folder_path = os.path.dirname(path)
         os.makedirs(folder_path, exist_ok=True)
         return path

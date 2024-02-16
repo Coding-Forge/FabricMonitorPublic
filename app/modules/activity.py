@@ -1,4 +1,5 @@
 import json
+import os
 import logging
 
 from datetime import datetime, timedelta
@@ -58,6 +59,8 @@ def main():
 
                 # check the https response code for 200
                 if "ERROR" in result:
+                    logging.error(f"Error: {result}")
+                else:
 
                     # this is common to both parts of the if statement
                     if result.get("activityEventEntities"):
@@ -67,11 +70,14 @@ def main():
                         continuationUri = result.get("continuationUri")
 
                     # create the folder structure for the output path
-                    outputPath = bob.create_path(f"{config.get('OutputPath')}/activity/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/")
+                    localPath = f"{settings.get('OutputPath')}/activity/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/"
                     lakehousePath = f"{settings['LakehouseName']}.Lakehouse/Files/activity/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/"
-                    
-                    logging.info(f"Output Path: {lakehousePath}")
 
+                    # create the folder structure for the output path                       
+                    #outputPath = bob.create_path(localPath)
+                    outputPath = localPath
+
+                    os.makedirs(outputPath, exist_ok=True)
                     dc = FF.create_directory(file_system_client=FF.fsc, directory_name=lakehousePath)
 
                     # do a for loop until all json arrays in audits are read and written to storage
@@ -95,10 +101,6 @@ def main():
                         audits = ""
 
                     # get out of the inner while loop
-                    break
-
-                else:
-                    print(result)
                     break
 
             pivotDate += timedelta(days=1)

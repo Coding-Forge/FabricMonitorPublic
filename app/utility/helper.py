@@ -137,20 +137,24 @@ class Bob:
 
     logging.info('Started')
 
-    def invokeAPI(self, rest_api, headers=None):
+    def invokeAPI(self, rest_api, headers=None, json=None):
         """
         Invoke a REST API
         url: str
         headers: dict
+        body: dict
         """
-        if not headers:
-            url = rest_api
-            response = requests.get(url)
-        else:
-            api_root = "https://api.powerbi.com/v1.0/myorg/"
+        api_root = "https://api.powerbi.com/v1.0/myorg/"
+        if json:
             url = api_root + rest_api
-            
-            response = requests.get(url, headers=headers)
+            response = requests.post(url, headers=headers, json=json)
+        else:
+            if not headers:
+                url = rest_api
+                response = requests.get(url)
+            else:
+                url = api_root + rest_api
+                response = requests.get(url, headers=headers)
 
         if response.status_code in [200, 202]:
             return response.json()
