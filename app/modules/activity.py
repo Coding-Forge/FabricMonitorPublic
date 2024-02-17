@@ -5,9 +5,31 @@ import logging
 from datetime import datetime, timedelta
 from ..utility.helper import Bob
 from ..utility.fabric import File_Table_Management
+import asyncio
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
-def main():
+async def record_audits(DirectoryClient, FF:File_Table_Management, audit, pivotDate, pageIndex, outputPath):
+    if pageIndex == 1:
+        outputFilePath = f"{outputPath}/{pivotDate.strftime('%Y%m%d')}.json"
+        lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}.json"
+    else:
+        outputFilePath = f"{outputPath}/{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
+        lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
+
+    ### This can now be streamed using the write_json_to_file method
+    # TODO: convert audits to json
+    #with open(outputFilePath, "w") as file:
+    #    file.write(json.dumps(audit))
+    FF.write_json_to_file(directory_client=DirectoryClient, file_name=lakehouseFile, json_data=audit)
+    #FF.upload_file_to_directory(directory_client=dc, local_path=outputPath, file_name=lakehouseFile)
+
+    flagNoActivity = False
+
+    pageIndex +=1 
+    audits = ""
+
+
+async def main():
     logging.info('Started')
 
     ##### INTIALIZE THE CONFIGURATION #####
@@ -23,7 +45,7 @@ def main():
     )
 
     ##### INTIALIZE THE CONFIGURATION #####
-    
+
     config = bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
     if isinstance(config, str):
         lastRun = json.loads(config).get("lastRun")
@@ -35,7 +57,7 @@ def main():
     pivotDate = lastRun_tm.replace(hour=0, minute=0, second=0, microsecond=0)
     # Your code here
 
-    def get_activity(pivotDate=pivotDate):
+    async def get_activity(pivotDate=pivotDate):
         while (pivotDate<datetime.now()):
             audits = list()
             pageIndex = 1
@@ -82,24 +104,7 @@ def main():
 
                     # do a for loop until all json arrays in audits are read and written to storage
                     for audit in audits:
-
-                        if pageIndex == 1:
-                            outputFilePath = f"{outputPath}/{pivotDate.strftime('%Y%m%d')}.json"
-                            lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}.json"
-                        else:
-                            outputFilePath = f"{outputPath}/{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
-                            lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
-
-                        ### This can now be streamed using the write_json_to_file method
-                        # TODO: convert audits to json
-                        #with open(outputFilePath, "w") as file:
-                        #    file.write(json.dumps(audit))
-                        FF.write_json_to_file(directory_client=dc, file_name=lakehouseFile, json_data=audit)
-                        #FF.upload_file_to_directory(directory_client=dc, local_path=outputPath, file_name=lakehouseFile)
-
-                        flagNoActivity = False
-                        pageIndex +=1 
-                        audits = ""
+                        await record_audits(dc, FF, audit, pivotDate, pageIndex, outputPath)
 
                     # get out of the inner while loop
                     break
@@ -107,9 +112,14 @@ def main():
             pivotDate += timedelta(days=1)
 
 
-    get_activity(pivotDate=pivotDate)
+        #await get_activity(pivotDate=pivotDate)   
+    await get_activity()
 
 
 if __name__ == "__main__":
     main()
 
+
+
+
+    

@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import asyncio
 
 from ..utility.fabric import File_Table_Management
 from ..utility.helper import Bob
@@ -18,7 +19,7 @@ reset  = True
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
 
-def main():
+async def main():
     logging.info('Started')
 ##################### INTIALIZE THE CONFIGURATION #####################
     bob = Bob()
