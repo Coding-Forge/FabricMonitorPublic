@@ -90,11 +90,12 @@ def main():
                             outputFilePath = f"{outputPath}/{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
                             lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
 
+                        ### This can now be streamed using the write_json_to_file method
                         # TODO: convert audits to json
-                        with open(outputFilePath, "w") as file:
-                            file.write(json.dumps(audit))
-
-                        FF.upload_file_to_directory(directory_client=dc, local_path=outputPath, file_name=lakehouseFile)
+                        #with open(outputFilePath, "w") as file:
+                        #    file.write(json.dumps(audit))
+                        FF.write_json_to_file(directory_client=dc, file_name=lakehouseFile, json_data=audit)
+                        #FF.upload_file_to_directory(directory_client=dc, local_path=outputPath, file_name=lakehouseFile)
 
                         flagNoActivity = False
                         pageIndex +=1 

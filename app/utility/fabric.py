@@ -57,3 +57,14 @@ class File_Table_Management:
             local_file.close()
 
 
+    def write_json_to_file(self, directory_client: DataLakeDirectoryClient, file_name: str, json_data: dict):
+        try:
+            file_client = directory_client.get_file_client(file_name)
+        except Exception as e:
+            print("treat an error as if the file does not exist")
+            directory_client.create_file(file_name)
+
+        json_string = json.dumps(json_data)
+        json_bytes = json_string.encode('utf-8')
+        
+        file_client.upload_data(json_bytes, overwrite=True)
