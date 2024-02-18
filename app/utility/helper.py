@@ -2,6 +2,7 @@ import os
 import json
 import requests
 import logging
+import msal
 
 from datetime import datetime, timedelta
 from adal import AuthenticationContext
@@ -42,27 +43,39 @@ class Bob:
         client_id = sp['AppId']
         client_secret = sp['AppSecret']
 
+        # Create a ConfidentialClientApplication object
+        app = msal.ConfidentialClientApplication(
+            client_id=client_id,
+            client_credential=client_secret,
+            authority=f"https://login.microsoftonline.com/{tenant_id}"
+        )
+        scopes = ["https://analysis.windows.net/powerbi/api/.default"]
+        
+        # Acquire a token using client credentials
+        try:
+            result = app.acquire_token_for_client(scopes=scopes)
+        except Exception as ex:
+            print(ex)
 
-        # Define the authority URL
-        authority_url = f"https://login.microsoftonline.com/{tenant_id}"
-
-        print(f"Authority URL: {authority_url}")
-
-        # Define the resource URL
-        resource_url = "https://analysis.windows.net/powerbi/api"
-
-        # Create an instance of the AuthenticationContext
-        context = AuthenticationContext(authority_url)
-
-        # Acquire an access token using the client credentials
-        token = context.acquire_token_with_client_credentials(resource_url, client_id, client_secret)
-
-        # Check if the token acquisition was successful
-        if 'accessToken' in token:
-            access_token = token['accessToken']
-            
-            # Make a GET request to the API with the access token
+        if "access_token" in result:
+            access_token = result["access_token"]
+            # Use the access token to make API calls to Power BI
             headers = {'Authorization': f'Bearer {access_token}'}
+
+            # TODO: Add your Power BI API calls here
+
+        else:
+            # If silent token acquisition fails, fallback to interactive authentication
+            result = app.acquire_token_for_client(scopes=scopes)
+
+            if "access_token" in result:
+                # TODO: Add your Power BI API calls here
+                access_token = result["access_token"]
+                # Use the access token to make API calls to Power BI
+                headers = {'Authorization': f'Bearer {access_token}'}
+
+            else:
+                print(result.get("error_description", "Authentication failed."))
 
         return headers
 
