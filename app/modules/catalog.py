@@ -1,10 +1,11 @@
 import os
 import json
 import time
+import asyncio
 
 from datetime import datetime, timedelta
-from ..utility.helper import Bob
-from ..utility.fabric import File_Table_Management
+from ..utility.helps import Bob
+from ..utility.fab2 import File_Table_Management
 
 ####### CATALOG PRECONFIGURATION #######
 catalog_types = ["scan","snapshots"]
@@ -23,7 +24,7 @@ getInfoInnerBatchCount = 100
 
 
 
-def main():
+async def main():
 ##################### INTIALIZE THE CONFIGURATION #####################
     bob = Bob()
     settings = bob.get_settings()
@@ -42,7 +43,7 @@ def main():
 
 ##################### INTIALIZE THE CONFIGURATION #####################
 
-    state = bob.get_state(f"/{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+    state = await bob.get_state(f"/{settings['LakehouseName']}.Lakehouse/Files/catalog/")
     if isinstance(state, str):
         LastRun = json.loads(state).get("lastRun")
         LastFullScan = json.loads(state).get("lastFullScan")
@@ -58,13 +59,14 @@ def main():
 
 
     rest_api = "admin/workspaces/modified?"
-    result = bob.invokeAPI(rest_api=rest_api, headers=headers)
+    result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
 
 
     workspaces = list()
 
     # Check if the request was successful
     if "ERROR" not in result:
+        result = json.loads(result)
         # Convert the JSON response to a pandas DataFrame
         for workspace in result:
             workspaces.append(workspace.get("id"))
@@ -85,11 +87,12 @@ def main():
 
         workspaceScanResults = []
 
-        result = bob.invokeAPI(rest_api=rest_api, headers=headers, json=body) 
+        result = await bob.invokeAPI(rest_api=rest_api, headers=headers, json=body) 
 
         if "ERROR" in result:
             print(f"Error: {result}")
-        else:   
+        else:
+            result = json.loads(result)   
             workspaceScanResults.append(result)
 
             for workspaceScanResult in workspaceScanResults:
@@ -101,33 +104,37 @@ def main():
                     time.sleep(scanStatusSleepSeconds)
 
                     rest_api = f"admin/workspaces/scanStatus/{workspaceScanResult.get('id')}"
+                    result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
 
-                    result = bob.invokeAPI(rest_api=rest_api, headers=headers)
                     if "ERROR" in result:
                         print(f"Error: {result}")
                     else:
+                        result = json.loads(result)
                         workspaceScanResult["status"] = result.get("status")
 
                 if "Succeeded" in workspaceScanResult["status"]:
                     id = workspaceScanResult.get("id")
 
                     rest_api = f"admin/workspaces/scanResult/{id}"
+                    scanResult = await bob.invokeAPI(rest_api=rest_api, headers=headers)
 
-                    scanResult = bob.invokeAPI(rest_api=rest_api, headers=headers)
-                    if "ERROR" in scanResult:
-                        print(f"Error: {scanResult}")
+                    # TODO: create a better check on whether scan results were returned or error thrown
+                    if "ERRORs" in scanResult:
+                        print(f"Error: Did not get scan results for workspace {id}")
                     else:
-                        with open("scanResults.json",'w') as file:
-                            file.write(json.dumps(scanResult))
+                        scanResult = json.loads(scanResult)
+                        #with open("scanResults.json",'w') as file:
+                        #    file.write(json.dumps(scanResult))
 
                         today = datetime.utcnow()
 
                         path = f"{settings['LakehouseName']}.Lakehouse/Files/catalog/scans/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
-                        dc = FF.create_directory(file_system_client=FF.fsc, directory_name=path)
-                        FF.upload_file_to_directory(directory_client=dc, local_path=".", file_name="scanResults.json")
-                    
-
+                        dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=path)
+                        try:
+                            await FF.write_json_to_file(directory_client=dc, file_name="scanResults.json", json_data=scanResult)
+                        except TypeError as e:
+                            print(f"Please fix the async to handle the Error: {e} -- is this the issue")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
