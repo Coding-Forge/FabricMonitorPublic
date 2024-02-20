@@ -1,11 +1,12 @@
+import asyncio
 import json
-import os
 import logging
+import os
+import time
 
 from datetime import datetime, timedelta
-from ..utility.helper import Bob
-from ..utility.fabric import File_Table_Management
-import asyncio
+from ..utility.helps import Bob
+from ..utility.fab2 import File_Table_Management
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
 async def record_audits(DirectoryClient, FF:File_Table_Management, audit, pivotDate, pageIndex, outputPath):
@@ -35,7 +36,8 @@ async def main():
     ##### INTIALIZE THE CONFIGURATION #####
     bob = Bob()
     settings = bob.get_settings()
-    headers = bob.get_context()
+    headers =  bob.get_context()
+    
 
     FF = File_Table_Management(
         tenant_id=settings['ServicePrincipal']['TenantId'],
@@ -46,7 +48,7 @@ async def main():
 
     ##### INTIALIZE THE CONFIGURATION #####
 
-    config = bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
+    config = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
     if isinstance(config, str):
         lastRun = json.loads(config).get("lastRun")
     else:
@@ -68,22 +70,25 @@ async def main():
             rest_api = f"admin/activityevents?startDateTime='{pivotDate.strftime('%Y-%m-%dT%H:%M:%SZ')}'&endDateTime='{nextDate.strftime('%Y-%m-%dT%H:%M:%SZ')}'"
 
             logging.info(f"Rest API: {rest_api}")
-            continuationUri=""
+            continuationUri=False
+
+            result = None
 
             # python does not have a do while so this is the best way 
             # just need to break out of the loop when a condition is met
             while(True):
 
                 if continuationUri:
-                    result = bob.invokeAPI(continuationUri)
+                    result = await bob.invokeAPI(continuationUri)
                 else:
-                    result = bob.invokeAPI(rest_api=rest_api, headers=headers)
+                    result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
+
 
                 # check the https response code for 200
                 if "ERROR" in result:
                     logging.error(f"Error: {result}")
                 else:
-
+                    result = json.loads(result)
                     # this is common to both parts of the if statement
                     if result.get("activityEventEntities"):
                         audits.append(result.get("activityEventEntities"))
@@ -100,7 +105,7 @@ async def main():
                     outputPath = localPath
 
                     os.makedirs(outputPath, exist_ok=True)
-                    dc = FF.create_directory(file_system_client=FF.fsc, directory_name=lakehousePath)
+                    dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehousePath)
 
                     # do a for loop until all json arrays in audits are read and written to storage
                     for audit in audits:
@@ -117,9 +122,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    main()
-
-
-
-
-    
+    asyncio.run(main())
