@@ -31,7 +31,7 @@ class Bob:
         os.makedirs(folder_path, exist_ok=True)
         return path
 
-    def get_context(self):
+    def get_context(self, graph=False):
         """
         Get the access token for the Power BI API
         """
@@ -40,13 +40,23 @@ class Bob:
         client_id = sp['AppId']
         client_secret = sp['AppSecret']
 
+        if graph:
+            authority = f"https://login.microsoftonline.com/{tenant_id}"
+            scope = "https://analysis.windows.net/powerbi/api/.default"
+        else:
+            #authority = f"https://login.microsoftonline.com/{tenant_id}/oauth2/token?api-version=1.0"
+            authority = f"https://login.microsoftonline.com/{tenant_id}"
+            scope = "https://graph.microsoft.com/.default"
+            
+
         # Create a ConfidentialClientApplication object
         app = msal.ConfidentialClientApplication(
             client_id=client_id,
             client_credential=client_secret,
-            authority=f"https://login.microsoftonline.com/{tenant_id}"
+            authority=authority
         )
-        scopes = ["https://analysis.windows.net/powerbi/api/.default"]
+
+        scopes = [scope]
         
         # Acquire a token using client credentials
         try:
