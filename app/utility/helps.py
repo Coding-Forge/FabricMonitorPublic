@@ -7,7 +7,7 @@ import aiohttp
 
 from datetime import datetime, timedelta
 from adal import AuthenticationContext
-from ..utility.fabric import File_Table_Management
+from app.utility.fabric import File_Table_Management
 
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
