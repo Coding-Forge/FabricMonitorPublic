@@ -25,8 +25,10 @@ async def main():
 ##################### INTIALIZE THE CONFIGURATION #####################
     bob = Bob()
     # get POWER BI context and settings -- this call must be synchronous
+        
     settings = bob.get_settings()
     headers = bob.get_context()
+    print(headers)
     
     FF = File_Table_Management(
         tenant_id=settings['ServicePrincipal']['TenantId'],
@@ -39,7 +41,11 @@ async def main():
 
 ##################### INTIALIZE THE CONFIGURATION #####################
 
-    state = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+    try:
+        state = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+    except Exception as e:
+        print(f"Error: {e}")
+
     if isinstance(state, str):
         LastRun = json.loads(state).get("lastRun")
         LastFullScan = json.loads(state).get("lastFullScan")
@@ -55,7 +61,7 @@ async def main():
 
 # create a file structure for the api results
     scans = f"scan/{today.strftime('%Y')}/{today.strftime('%m')}/"
-    snapshots =f"snapshots/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}"
+    snapshots =f"snapshots/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
 
     snapshotFiles = list()
 
@@ -65,11 +71,14 @@ async def main():
     logging.info(f"Headers: {headers}")  
 
     rest_api = "admin/apps?$top=5000&$skip=0"
-    result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
-
+    try:
+        result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
+    except Exception as e:
+        print(f"Error: {e} - {result}")
+    
+    print(f"Result: {result}")
     # check to see if the filepath already exists
     if "ERROR" not in result:
-        result = json.loads(result)
 
         ## check if file already exists
         lakehouse_dir = f"{lakehouse_catalog}{snapshots}"

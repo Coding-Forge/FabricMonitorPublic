@@ -4,6 +4,7 @@ import requests
 import logging
 import msal
 import aiohttp
+from typing import Dict, Any, Coroutine
 
 from datetime import datetime, timedelta
 from adal import AuthenticationContext
@@ -31,7 +32,7 @@ class Bob:
         os.makedirs(folder_path, exist_ok=True)
         return path
 
-    def get_context(self, graph=False):
+    def get_context(self, graph=False, tenant=False):
         """
         Get the access token for the Power BI API
         """
@@ -42,11 +43,14 @@ class Bob:
 
         if graph:
             authority = f"https://login.microsoftonline.com/{tenant_id}"
-            scope = "https://analysis.windows.net/powerbi/api/.default"
+            scope = "https://graph.microsoft.com/.default"
+        elif tenant:
+            authority = f"https://login.microsoftonline.com/{tenant_id}"
+            scope = "https://api.fabric.microsoft.com/.default"  
         else:
             #authority = f"https://login.microsoftonline.com/{tenant_id}/oauth2/token?api-version=1.0"
             authority = f"https://login.microsoftonline.com/{tenant_id}"
-            scope = "https://graph.microsoft.com/.default"
+            scope = "https://analysis.windows.net/powerbi/api/.default"
             
 
         # Create a ConfidentialClientApplication object
@@ -158,7 +162,7 @@ class Bob:
 
     logging.info('Started')
 
-    async def invokeAPI(self, rest_api, headers=None, json=None):
+    async def invokeAPI(self, rest_api, headers=None, json=None)-> Coroutine[Dict[str,Any], None, None]:
         """
         Invoke a REST API
         url: str
@@ -180,18 +184,18 @@ class Bob:
         if json:
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, headers=headers, json=json) as response:
-                    return await response.text()
+                    return await response.json()
         else:
             if not headers:
                 url = rest_api
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url) as response:
-                        return await response.text()
+                        return await response.json()
             else:
                 url = api_root + rest_api
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url, headers=headers) as response:
-                        return await response.text()
+                        return await response.json()
 
   
 

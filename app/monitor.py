@@ -5,6 +5,9 @@ from app.modules.activity import main as Activity
 from app.modules.apps import main as Apps
 from app.modules.catalog import main as Catalog
 from app.modules.graph import main as Graph
+from app.modules.tenant import main as Tenant
+from app.modules.refreshhistory import main as RefreshHistory
+
 from app.utility.helps import Bob
 from app.utility.fab2 import File_Table_Management
 
@@ -45,7 +48,7 @@ async def main():
     #asyncio.run(async_main())
 
     work_queue = asyncio.Queue()
-    modules = [Activity, Apps, Catalog, Graph]
+    modules = [Activity, Apps, Catalog, Graph, Tenant, RefreshHistory]
 
     for module in modules:
         await work_queue.put(module)
@@ -55,7 +58,8 @@ async def main():
             asyncio.create_task(task("One", work_queue)),
             asyncio.create_task(task("Two", work_queue)),
             asyncio.create_task(task("Three", work_queue)),
-            asyncio.create_task(task("Four", work_queue))
+            asyncio.create_task(task("Four", work_queue)),
+            asyncio.create_task(task("Five", work_queue))
         )
 
 if __name__ == "__main__":

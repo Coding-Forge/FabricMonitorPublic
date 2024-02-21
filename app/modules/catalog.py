@@ -66,7 +66,6 @@ async def main():
 
     # Check if the request was successful
     if "ERROR" not in result:
-        result = json.loads(result)
         # Convert the JSON response to a pandas DataFrame
         for workspace in result:
             workspaces.append(workspace.get("id"))
@@ -92,7 +91,6 @@ async def main():
         if "ERROR" in result:
             print(f"Error: {result}")
         else:
-            result = json.loads(result)   
             workspaceScanResults.append(result)
 
             for workspaceScanResult in workspaceScanResults:
@@ -109,7 +107,6 @@ async def main():
                     if "ERROR" in result:
                         print(f"Error: {result}")
                     else:
-                        result = json.loads(result)
                         workspaceScanResult["status"] = result.get("status")
 
                 if "Succeeded" in workspaceScanResult["status"]:
@@ -122,9 +119,6 @@ async def main():
                     if "ERRORs" in scanResult:
                         print(f"Error: Did not get scan results for workspace {id}")
                     else:
-                        scanResult = json.loads(scanResult)
-                        #with open("scanResults.json",'w') as file:
-                        #    file.write(json.dumps(scanResult))
 
                         today = datetime.utcnow()
 

@@ -88,7 +88,6 @@ async def main():
                 if "ERROR" in result:
                     logging.error(f"Error: {result}")
                 else:
-                    result = json.loads(result)
                     # this is common to both parts of the if statement
                     if result.get("activityEventEntities"):
                         audits.append(result.get("activityEventEntities"))
