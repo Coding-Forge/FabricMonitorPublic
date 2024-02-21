@@ -89,7 +89,7 @@ async def main():
         dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
 
         try:
-            await FF.write_json_to_file(directory_client=dc, file_name="apps.json", json_data=result)
+            FF.write_json_to_file(directory_client=dc, file_name="apps.json", json_data=result)
         except TypeError as e:
             print(f"Please fix the async to handle the Error: {e} -- is this the issue")
         

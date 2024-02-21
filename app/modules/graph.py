@@ -3,6 +3,7 @@ import json
 import logging
 import asyncio
 import time
+import requests
 
 from ..utility.fab2 import File_Table_Management
 from ..utility.helps import Bob
@@ -75,17 +76,15 @@ async def main():
         for key, value in call.items():
             print(f"Getting {key} from {value['GraphURL']} and file path {value['FilePath']}")
 
-            import requests
-
             response = requests.get(url=value['GraphURL'], headers=headers)
             if response.status_code == 200:
                 result = response.json()
-                print(result)
 
                 dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_catalog)
                 FF.write_json_to_file(directory_client=dc, file_name=value['FilePath'], json_data=result)
 
-
+# TODO: Fix error that comes from return application/json
+# doesn't kill the job but does throw an error
 
 if __name__ == "__main__":
     asyncio.run(main())
