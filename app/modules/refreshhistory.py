@@ -40,15 +40,13 @@ async def main():
 
 #    state = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
  
-    url = "https://api.powerbi.com/v1.0/myorg/admin/capacities/refreshables"
+    rest_api = "admin/capacities/refreshables"
 
 
-    response = requests.get(url=url, headers=headers)
-    if response.status_code == 200:
-        result = response.json()
-
-        print(result)
-
+    result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
+    if "ERROR" in result:
+        print(f"Error: {result}")
+    else:
         dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
         FF.write_json_to_file(directory_client=dc, file_name=file_name, json_data=result)
 

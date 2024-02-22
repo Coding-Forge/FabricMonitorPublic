@@ -28,7 +28,6 @@ async def main():
         
     settings = bob.get_settings()
     headers = bob.get_context()
-    print(headers)
     
     FF = File_Table_Management(
         tenant_id=settings['ServicePrincipal']['TenantId'],
@@ -76,19 +75,18 @@ async def main():
     except Exception as e:
         print(f"Error: {e} - {result}")
     
-    print(f"Result: {result}")
     # check to see if the filepath already exists
     if "ERROR" not in result:
 
         ## check if file already exists
         lakehouse_dir = f"{lakehouse_catalog}{snapshots}"
 
-        print(f"Checking if {lakehouse_dir} exists")
+        #print(f"Checking if {lakehouse_dir} exists")
 
         try:
             paths = FF.fsc.get_paths(lakehouse_dir)
             for path in paths:
-                print(f"Path: {path.name}")
+                #print(f"Path: {path.name}")
                 if "app.json" in path.name:
                     exit(0)
 

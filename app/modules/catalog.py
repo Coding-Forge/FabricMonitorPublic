@@ -97,9 +97,8 @@ async def main():
 
                 while(workspaceScanResult.get("status") in ["Running", "NotStarted"]):
                 
-                    print(f"Waiting for scan results, sleeping for {scanStatusSleepSeconds} seconds...")
-
-                    time.sleep(scanStatusSleepSeconds)
+                    #print(f"Waiting for scan results, sleeping for {scanStatusSleepSeconds} seconds...")
+                    #time.sleep(scanStatusSleepSeconds)
 
                     rest_api = f"admin/workspaces/scanStatus/{workspaceScanResult.get('id')}"
                     result = await bob.invokeAPI(rest_api=rest_api, headers=headers)

@@ -74,7 +74,7 @@ async def main():
 
     for call in graphCalls:
         for key, value in call.items():
-            print(f"Getting {key} from {value['GraphURL']} and file path {value['FilePath']}")
+            #print(f"Getting {key} from {value['GraphURL']} and file path {value['FilePath']}")
 
             response = requests.get(url=value['GraphURL'], headers=headers)
             if response.status_code == 200:
