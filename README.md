@@ -1,7 +1,32 @@
 # Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+This project looks to take advantage of all the work put into the original Power BI Monitor application and port it to Fabric. This project has several components including a means of containerizing the application and for those enthusiasts that like to use Jupyter Notebooks a whole section is devoted to "BUILDING" the application but using notebooks.
 
 # Getting Started
+To use this application you will need to [create a service principal](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app) in Microsoft Entra. This service principal will need to be granted specific permissions within the [Fabric Admin Portal](https://app.fabric.microsoft.com/admin-portal) and for those that would also like to capture information about users licenses and other privileged information will have to grant permissions to Microsoft Graph.
+
+## Fabric Admin Portal Settings  
+You can grant specific permissions to service principals to use Fabric APIs including getting metadata of your Power BI semantic models. To enable this the service principal must be put into a group and that group will then be given permission to access the Fabric APIs
+
+<img src="images/admin-portal-settings.png" heigth="500px" width="500px"></img>
+
+## Service Principal API permissions  
+In order for the service principal to leverage all of the functionality of the Fabric Montior application you will will need to grant specific API permissions for the service principal. The following can be granted when editing the Service Principal in Microsoft Entra under the Apps section and API permissions.
+
+### Graph Permissions  
+|API/Permissions Name|Type|Description|  
+|---|---|---|
+|Directory.Read.All|Application|Read Directory Data|
+|User.Read|Delegated|Sign in and read user profile|  
+|User.Read.All|Application|Read all user's full profile
+
+### Power BI  
+|API/Permissions Name|Type|Description|  
+|---|---|---|
+|Tenant.Read.All|Delegated|View all content in tenant|
+
+<img src="images/Service-Principal-API-Permissions.png" height="400px" width="1500px"></img>
+
+
 TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
 1.	Installation process
 2.	Software dependencies
