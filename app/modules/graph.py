@@ -27,7 +27,7 @@ async def main():
     bob = Bob()
     # get POWER BI context and settings -- this call must be synchronous
     settings = bob.get_settings()
-    headers = bob.get_context()
+    headers = bob.get_context(graph=True)
     headers['Content-Type'] = 'application/json'
 
     sp = json.loads(settings['ServicePrincipal'])
@@ -77,11 +77,10 @@ async def main():
         for key, value in call.items():
             #print(f"Getting {key} from {value['GraphURL']} and file path {value['FilePath']}")
 
-            result = bob.invokeAPI(rest_api=value['GraphURL'], headers=headers, graph=True)
-            if "ERROR" in result:
-                logging.error(f"Error: {result}")
-                continue
-            else:
+
+            response = requests.get(value['GraphURL'], headers=headers)
+            if response.status_code == 200:
+                result = response.json()
                 dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_catalog)
                 FF.write_json_to_file(directory_client=dc, file_name=value['FilePath'], json_data=result)
 
