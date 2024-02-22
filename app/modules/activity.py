@@ -102,7 +102,6 @@ async def main():
                     #outputPath = bob.create_path(localPath)
                     outputPath = localPath
 
-                    os.makedirs(outputPath, exist_ok=True)
                     dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehousePath)
 
                     # do a for loop until all json arrays in audits are read and written to storage
