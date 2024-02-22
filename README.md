@@ -6,7 +6,7 @@ This project looks to take advantage of all the work put into the original Power
 What you need to do to use this application
 1.	Create a Service Principal
 2.	Grant permissions to the Service Principal  
-    a. Fabric Admin Portal
+    a. Fabric Admin Portal  
     b. Service Principal API permissions
 3.	Create your .env file
 4.	Using the application  
