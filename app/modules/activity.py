@@ -37,17 +37,16 @@ async def main():
     bob = Bob()
     settings = bob.get_settings()
     headers =  bob.get_context()
-    
 
+    sp = json.loads(settings['ServicePrincipal'])
     FF = File_Table_Management(
-        tenant_id=settings['ServicePrincipal']['TenantId'],
-        client_id=settings['ServicePrincipal']['AppId'],
-        client_secret=settings['ServicePrincipal']['AppSecret'],
+        tenant_id=sp['TenantId'],
+        client_id=sp['AppId'],
+        client_secret=sp['AppSecret'],
         workspace_name=settings['WorkspaceName']
     )
 
     ##### INTIALIZE THE CONFIGURATION #####
-
     config = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
     if isinstance(config, str):
         lastRun = json.loads(config).get("lastRun")

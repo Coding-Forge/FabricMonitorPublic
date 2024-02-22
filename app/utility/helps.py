@@ -5,23 +5,17 @@ import logging
 import msal
 import aiohttp
 from typing import Dict, Any, Coroutine
-
+from dotenv import load_dotenv, dotenv_values
 from datetime import datetime, timedelta
-from adal import AuthenticationContext
 from app.utility.fabric import File_Table_Management
 
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
+
 class Bob:
 
     def __init__(self):
-        with open('config.json', 'r') as file:
-            f = file.read()
-        
-        if isinstance(f, str):
-            self.app_settings = json.loads(f)
-        else:
-            self.app_settings = json.dumps(f)
+        self.app_settings = dotenv_values(".env")
 
     async def create_path(self, path):
         """
@@ -36,7 +30,7 @@ class Bob:
         """
         Get the access token for the Power BI API
         """
-        sp = self.app_settings['ServicePrincipal']
+        sp = json.loads(self.app_settings['ServicePrincipal'])
         tenant_id = sp['TenantId']
         client_id = sp['AppId']
         client_secret = sp['AppSecret']
@@ -108,16 +102,13 @@ class Bob:
         returns a json file that has information about the last run date
         and scan dates
         """
-
-        sp = self.app_settings['ServicePrincipal']
-
+        sp = json.loads(self.app_settings['ServicePrincipal'])
         FF = File_Table_Management(
             tenant_id=sp['TenantId'],
             client_id=sp['AppId'],
             client_secret=sp['AppSecret'],
             workspace_name=self.app_settings['WorkspaceName']
         )
-
         fsc = FF.fsc
 
         paths = fsc.get_paths(path=path)

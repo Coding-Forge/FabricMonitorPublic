@@ -30,10 +30,11 @@ async def main():
     headers = bob.get_context()
     headers['Content-Type'] = 'application/json'
 
+    sp = json.loads(settings['ServicePrincipal'])
     FF = File_Table_Management(
-        tenant_id=settings['ServicePrincipal']['TenantId'],
-        client_id=settings['ServicePrincipal']['AppId'],
-        client_secret=settings['ServicePrincipal']['AppSecret'],
+        tenant_id=sp['TenantId'],
+        client_id=sp['AppId'],
+        client_secret=sp['AppSecret'],
         workspace_name=settings['WorkspaceName']
     )
 
