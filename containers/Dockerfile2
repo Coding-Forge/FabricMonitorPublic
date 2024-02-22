@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y python3.10 python3-distutils python3-pi
 
 COPY config.json .
 COPY requirements.txt .
+COPY .env .
 
 # Install the required Python packages
 RUN pip3 install -r requirements.txt

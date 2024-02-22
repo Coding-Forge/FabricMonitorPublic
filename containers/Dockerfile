@@ -19,6 +19,7 @@ RUN apt-get update && apt-get -y install cron
 
 COPY config.json .
 COPY requirements.txt .
+COPY .env .
 
 RUN echo "0 3 * * * root python3 -m /app.monitor" > /etc/cron.d/my_cron_job
 

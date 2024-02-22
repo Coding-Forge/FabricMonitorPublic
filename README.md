@@ -8,7 +8,7 @@ What you need to do to use this application
 2.	Grant permissions to the Service Principal  
     a. Fabric Admin Portal
     b. Service Principal API permissions
-3.	Create your config.json file
+3.	Create your .env file
 4.	Using the application  
     a. Native Python Application  
     b. Docker Container  
@@ -44,13 +44,24 @@ In order for the service principal to leverage all of the functionality of the F
 
 <img src="images/Service-Principal-API-Permissions.png" height="400px" width="1500px"></img>
 
-## Create your config.json  
-The `config.json` file will hold your information about what operations you want the appliction to undertake and will also include configuration for the service principal of which includes the client_id, client_secret, tenant_id, and environment. This code repository specifically prohibits the uploading of the `config.json` file to your code repository as this will expose secrets. There is work currently underway to add Managed Identity **STAY TUNED**
+## Create your .env  
+Your `.env` file will file will hold your information about what operations you want the appliction to undertake and will also include configuration for the service principal of which includes the client_id, client_secret, tenant_id, and environment. This code repository specifically prohibits the uploading of the `.env` file to your code repository as this will expose secrets. There is work currently underway to add Managed Identity **STAY TUNED**
 
-> NOTE: USE the enclosed config.json.example file
+> NOTE: USE the enclosed .env.exmple file to build your `.env` file
 
 ## Using the Application  
 This repository has three ways of using the application for gathering information from the Power BI and Fabric APIs. If you would like to deploy your application to a container then you can leverage the Dockerfiles in the containers folders. There are two Dockerfiles, one will execute the application upon startup and the other is set up to be run as a `CRON` job. Both of these images are built from the latest version of Ubuntu.
+
+### Running as an Application  
+You can run the code by using the following command from the root of this code to execute all the modules or you can run them singly:  
+```
+# to run the application
+python -m app.monitor 
+
+# to run individual modules
+python -m app.modules.<module name>
+```
+
 
 ### Build Docker Image  
 from the root of the application you can type the following commands to build your image  
@@ -62,6 +73,12 @@ docker build -t monitor/fabric:1.0 -f ./containers/Dockerfile2
 ```
 docker build -t monitor/fabric:cron -f ./containers/Dockerfile
 ```
+
+### Running Notebooks  
+You can also run each module as a Jupyter notebook. This allows you to step through the processes and get a better understanding of the modules. Each notebook will have supporting links to the appropriate Power BI API or Fabric API.  The notebook will also allow you to experiment with the process and modify it to your needs.
+
+> Notebooks can be found in the notebook folder and each notebook will be named after a module that it mimics.
+
 
 
 
