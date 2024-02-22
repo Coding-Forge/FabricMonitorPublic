@@ -1,6 +1,9 @@
 # Use the official Ubuntu base image
 FROM ubuntu:latest
 
+# Set the timezone to Eastern Time
+ENV TZ="America/New_York"
+
 # Update package information and install necessary tools
 RUN apt-get update && apt-get install -y software-properties-common gcc
 

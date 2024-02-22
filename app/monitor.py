@@ -55,11 +55,12 @@ async def main():
 
     with Timer(text="\nTotal elapsed time: {:.1f}"):
         await asyncio.gather(
-            asyncio.create_task(task("One", work_queue)),
-            asyncio.create_task(task("Two", work_queue)),
-            asyncio.create_task(task("Three", work_queue)),
-            asyncio.create_task(task("Four", work_queue)),
-            asyncio.create_task(task("Five", work_queue))
+            asyncio.create_task(task("Activity", work_queue)),
+            asyncio.create_task(task("Apps", work_queue)),
+            asyncio.create_task(task("Catalog", work_queue)),
+            asyncio.create_task(task("Graph", work_queue)),
+            asyncio.create_task(task("Tenant", work_queue)),
+            asyncio.create_task(task("Refresh History", work_queue))
         )
 
 if __name__ == "__main__":
