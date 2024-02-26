@@ -30,10 +30,14 @@ class Bob:
         """
         Get the access token for the Power BI API
         """
-        sp = json.loads(self.app_settings['ServicePrincipal'])
-        tenant_id = sp['TenantId']
-        client_id = sp['AppId']
-        client_secret = sp['AppSecret']
+        try:
+            sp = json.loads(self.app_settings['ServicePrincipal'])
+            tenant_id = sp['TenantId']
+            client_id = sp['AppId']
+            client_secret = sp['AppSecret']
+
+        except Exception as e:
+            print("An exception occurred while reading the file:", str(e))
 
         if graph:
             authority = f"https://login.microsoftonline.com/{tenant_id}"

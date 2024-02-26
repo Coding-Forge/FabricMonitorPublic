@@ -43,8 +43,6 @@ FF = File_Table_Management(
 
 ##################### INTIALIZE THE CONFIGURATION #####################
 
-
-
 async def get_workspace_info(workspace_groups):
     workspaceScanResults = []
     
