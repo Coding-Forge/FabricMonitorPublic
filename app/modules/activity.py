@@ -28,7 +28,6 @@ async def record_audits(DirectoryClient, FF:File_Table_Management, audit, pivotD
 
 
     pageIndex = str(random.randint(100, 10000)).zfill(5)
-    print(f"Page Index: {type(pageIndex)}")
     lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
     FF.write_json_to_file(directory_client=DirectoryClient, file_name=lakehouseFile, json_data=audit)
 

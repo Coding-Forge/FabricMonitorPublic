@@ -52,7 +52,7 @@ async def get_workspace_info(workspace_groups):
         "workspaces":workspace_groups
     }
 
-    print(f"Scanning workspaces: {body}")
+    #print(f"Scanning workspaces: {body}")
 
     rest_api = "admin/workspaces/getInfo?lineage=True&datasourceDetails=True&datasetSchema=True&datasetExpressions=True"
     result = await bob.invokeAPI(rest_api=rest_api, headers=headers, json=body) 
