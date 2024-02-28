@@ -49,8 +49,6 @@ async def main():
     ##### INTIALIZE THE CONFIGURATION #####
     config = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
 
-
-
     await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
 
 
