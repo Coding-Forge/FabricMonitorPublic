@@ -93,30 +93,6 @@ async def activity_events(url=None, headers=None, pivotDate=None, pageIndex=1):
             print(f"Error: {e}")
 
 
-# async def get_activity(pivotDate=pivotDate, pageIndex=1):
-#     while (pivotDate<datetime.now()):
-#         audits = list()
-#         flagNoActivity = True
-# 
-#         # keep the start and end time within a 24 hour period by adding 24 hours and removing 1 second 
-#         nextDate = (pivotDate + timedelta(hours=24)) + timedelta(seconds=-1)
-#         rest_api = f"admin/activityevents?startDateTime='{pivotDate.strftime('%Y-%m-%dT%H:%M:%SZ')}'&endDateTime='{nextDate.strftime('%Y-%m-%dT%H:%M:%SZ')}'"
-# 
-#         logging.info(f"Rest API: {rest_api}")
-#         continuationUri=""
-# 
-#         result = None
-#         innerLoop = True
-#         # python does not have a do while so this is the best way 
-#         # just need to break out of the loop when a condition is met
-# 
-#         await activity_events(url=rest_api, headers=headers, pivotDate=pivotDate)                        
-# 
-#         pivotDate += timedelta(days=1)
-#         pageIndex += 1
-# 
-#         await get_activity(pivotDate=pivotDate, pageIndex=pageIndex)   
-# await get_activity()
 
 async def main():
     logging.info('Started')
