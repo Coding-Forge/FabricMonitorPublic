@@ -24,10 +24,11 @@ FF = File_Table_Management(
 
 ##### INTIALIZE THE CONFIGURATION #####
 
-async def record_audits(DirectoryClient, FF:File_Table_Management, audit, pivotDate):
+async def record_audits(DirectoryClient, FF:File_Table_Management, audit, pivotDate, pageIndex=1):
 
 
-    pageIndex = str(random.randint(100, 10000)).zfill(5)
+    #pageIndex = str(random.randint(100, 10000)).zfill(5)
+    pageIndex = str(pageIndex).zfill(5)
     lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
     FF.write_json_to_file(directory_client=DirectoryClient, file_name=lakehouseFile, json_data=audit)
 
@@ -47,9 +48,8 @@ async def record_audits(DirectoryClient, FF:File_Table_Management, audit, pivotD
     flagNoActivity = False
 
 
-async def activity_events(url=None, headers=None, pivotDate=None):
+async def activity_events(url=None, headers=None, pivotDate=None, pageIndex=1):
     audits = list()
-    pageIndex = 1
 
     result = await bob.invokeAPI(rest_api=url, headers=headers)
 
@@ -74,9 +74,7 @@ async def activity_events(url=None, headers=None, pivotDate=None):
 
         # do a for loop until all json arrays in audits are read and written to storage
         for audit in audits:
-
-            await record_audits(dc, FF, audit, pivotDate)
-            pageIndex+=1
+            await record_audits(dc, FF, audit, pivotDate, pageIndex=pageIndex)
 
         try:
             if result.get("continuationUri"):
@@ -89,10 +87,36 @@ async def activity_events(url=None, headers=None, pivotDate=None):
                     # result = requests.get(url=continuationUri, headers=head)
                     # if result.status_code == 200:
                     #     print(f"what is the result {result}")
-                
-                    await activity_events(url=continuationUri, headers=head, pivotDate=pivotDate)
+                    pageIndex+=1
+                    await activity_events(url=continuationUri, headers=head, pivotDate=pivotDate, pageIndex=pageIndex)
         except Exception as e:
             print(f"Error: {e}")
+
+
+# async def get_activity(pivotDate=pivotDate, pageIndex=1):
+#     while (pivotDate<datetime.now()):
+#         audits = list()
+#         flagNoActivity = True
+# 
+#         # keep the start and end time within a 24 hour period by adding 24 hours and removing 1 second 
+#         nextDate = (pivotDate + timedelta(hours=24)) + timedelta(seconds=-1)
+#         rest_api = f"admin/activityevents?startDateTime='{pivotDate.strftime('%Y-%m-%dT%H:%M:%SZ')}'&endDateTime='{nextDate.strftime('%Y-%m-%dT%H:%M:%SZ')}'"
+# 
+#         logging.info(f"Rest API: {rest_api}")
+#         continuationUri=""
+# 
+#         result = None
+#         innerLoop = True
+#         # python does not have a do while so this is the best way 
+#         # just need to break out of the loop when a condition is met
+# 
+#         await activity_events(url=rest_api, headers=headers, pivotDate=pivotDate)                        
+# 
+#         pivotDate += timedelta(days=1)
+#         pageIndex += 1
+# 
+#         await get_activity(pivotDate=pivotDate, pageIndex=pageIndex)   
+# await get_activity()
 
 async def main():
     logging.info('Started')

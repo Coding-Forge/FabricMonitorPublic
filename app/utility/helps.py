@@ -212,13 +212,12 @@ class Bob:
         url = api_root + rest_api
 
         if "continuationToken" in rest_api:
-            result = requests.get(url=rest_api, headers=headers)
-            if result.status_code == 200:
-                return result.json()
-#async with aiohttp.ClientSession() as session:
-#    async with session.get(rest_api) as response:
-#        print(f"What are the response headers {response.headers}")
-#        return await response.json()
+            #result = requests.get(url=rest_api, headers=headers)
+            #if result.status_code == 200:
+            #    return result.json()
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url=rest_api, headers=headers) as response:
+                    return await response.json()
 
         if json:
             async with aiohttp.ClientSession() as session:
