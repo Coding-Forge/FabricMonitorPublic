@@ -201,20 +201,12 @@ class Bob:
         """
         api_root = "https://api.powerbi.com/v1.0/myorg/"
 
-        #async with aiohttp.ClientSession() as session:
-        #    while not work_queue.empty():
-        #        url = await work_queue.get()
-        #        print(f"Task {name} getting URL: {url}")
-        #        timer.start()
-        #        async with session.get(url) as response:
-        #            await response.text()
-        #        timer.stop()
         url = api_root + rest_api
 
+        ## The conintuation Token redirects to your organization for Power BI instead of accessing
+        ## the REST API the originated the call. Therefore, we need to intercept and call the 
+        ## using the continuation URI
         if "continuationToken" in rest_api:
-            #result = requests.get(url=rest_api, headers=headers)
-            #if result.status_code == 200:
-            #    return result.json()
             async with aiohttp.ClientSession() as session:
                 async with session.get(url=rest_api, headers=headers) as response:
                     return await response.json()
