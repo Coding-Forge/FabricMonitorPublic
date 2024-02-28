@@ -30,8 +30,8 @@ async def task(name, work_queue):
 
 async def main():
     # Your code here
-    #bob = Bob()
-    #settings = bob.get_settings()
+    bob = Bob()
+    settings = bob.get_settings()
     #
     ## get POWER BI context
     #headers = bob.get_context()
@@ -62,6 +62,9 @@ async def main():
             asyncio.create_task(task("Tenant", work_queue)),
             asyncio.create_task(task("Refresh History", work_queue))
         )
+
+    await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
+    await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
 
 if __name__ == "__main__":
     asyncio.run(main())

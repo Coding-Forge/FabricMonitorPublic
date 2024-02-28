@@ -157,6 +157,41 @@ class Bob:
 
     logging.info('Started')
 
+    async def save_state(self, path, file_name="state.json"):
+        """
+        takes a path arguement as string 
+        takes a file_name as a string (optional parameter)
+        saves a json file that has information about the last run
+        """
+        sp = json.loads(self.app_settings['ServicePrincipal'])
+        FF = File_Table_Management(
+            tenant_id=sp['TenantId'],
+            client_id=sp['AppId'],
+            client_secret=sp['AppSecret'],
+            workspace_name=self.app_settings['WorkspaceName']
+        )
+        fsc = FF.fsc
+
+        cfg = dict()
+        # TODO: Figure out if this is a scan or fullscan
+        if "catalog" in path:
+            cfg["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+            cfg["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+        else:
+            cfg["lastRun"] = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        try:
+            with open(file_name, 'w') as file:
+                file.write(json.dumps(cfg))
+
+            folder = FF.create_directory(file_system_client=FF.fsc, directory_name=path)    
+            FF.upload_file_to_directory(directory_client=folder,local_path= "./", file_name=file_name)                
+
+            return json.dumps(cfg)
+        except Exception as e:
+            print(f"Save file exception - {e}")
+        
+
     async def invokeAPI(self, rest_api, headers=None, json=None)-> Coroutine[Dict[str,Any], None, None]:
         """
         Invoke a REST API
@@ -175,6 +210,15 @@ class Bob:
         #            await response.text()
         #        timer.stop()
         url = api_root + rest_api
+
+        if "continuationToken" in rest_api:
+            result = requests.get(url=rest_api, headers=headers)
+            if result.status_code == 200:
+                return result.json()
+#async with aiohttp.ClientSession() as session:
+#    async with session.get(rest_api) as response:
+#        print(f"What are the response headers {response.headers}")
+#        return await response.json()
 
         if json:
             async with aiohttp.ClientSession() as session:
