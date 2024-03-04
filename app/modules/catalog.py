@@ -93,7 +93,7 @@ async def get_workspace_info(workspace_groups):
                     path = f"{settings['LakehouseName']}.Lakehouse/Files/catalog/scans/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
                     dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=path)
                     try:
-                        FF.write_json_to_file(directory_client=dc, file_name="scanResults.json", json_data=scanResult)
+                        await FF.write_json_to_file(directory_client=dc, file_name="scanResults.json", json_data=scanResult)
                     except TypeError as e:
                         print(f"Please fix the async to handle the Error: {e} -- is this the issue")
 

@@ -178,7 +178,7 @@ class Bob:
             cfg["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
             cfg["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
         else:
-            cfg["lastRun"] = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%dT%H:%M:%SZ')
+            cfg["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
 
         try:
             with open(file_name, 'w') as file:

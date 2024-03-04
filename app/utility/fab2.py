@@ -72,7 +72,7 @@ class File_Table_Management:
             local_file.close()
 
 
-    def write_json_to_file(self, directory_client: DataLakeDirectoryClient, file_name: str, json_data: dict):
+    async def write_json_to_file(self, directory_client: DataLakeDirectoryClient, file_name: str, json_data: dict):
         try:
             file_client = directory_client.get_file_client(file_name)
         except Exception as e:

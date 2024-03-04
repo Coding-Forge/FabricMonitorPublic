@@ -54,7 +54,7 @@ async def main():
         result = response.json()
 
         dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
-        FF.write_json_to_file(directory_client=dc, file_name="tenant-settings.json", json_data=result)
+        await FF.write_json_to_file(directory_client=dc, file_name="tenant-settings.json", json_data=result)
 
 # TODO: Fix error that comes from return application/json
 # doesn't kill the job but does throw an error

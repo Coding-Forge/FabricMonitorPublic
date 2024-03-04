@@ -21,7 +21,7 @@ async def record_audits(DirectoryClient, FF:File_Table_Management, audit, pivotD
     # TODO: convert audits to json
     #with open(outputFilePath, "w") as file:
     #    file.write(json.dumps(audit))
-    FF.write_json_to_file(directory_client=DirectoryClient, file_name=lakehouseFile, json_data=audit)
+    await FF.write_json_to_file(directory_client=DirectoryClient, file_name=lakehouseFile, json_data=audit)
     #FF.upload_file_to_directory(directory_client=dc, local_path=outputPath, file_name=lakehouseFile)
 
     flagNoActivity = False
