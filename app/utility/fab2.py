@@ -4,6 +4,7 @@ import json
 from azure.identity import ClientSecretCredential
 from azure.storage.filedatalake import FileSystemClient, DataLakeDirectoryClient
 from azure.storage.blob import BlobClient
+from dotenv import load_dotenv, dotenv_values
 
 
 class File_Table_Management:
@@ -84,3 +85,8 @@ class File_Table_Management:
         json_bytes = json_string.encode('utf-8')
         
         file_client.upload_data(json_bytes, overwrite=True)
+
+
+    async def write_to_blob():
+
+        blob_client = BlobClient(storage_url, container_name, blob_name, credential=credentials)

@@ -1,9 +1,10 @@
 from app.utility.file_management import File_Management
+import asyncio
 import json
 
-def main():
+async def main():
 
-    test = '[{"name":"brandon","age":"54","height":"74","unit":"inches"},{"name":"chizu","age":"52","height":"68","unit":"inches"},{"name":"will","age":"21","height":"73","unit":"inches"}]'
+    test = '[{"name":"brandon","age":"54","height":"74","unit":"inches"},{"name":"chizu","age":"52","height":"68","unit":"inches"},{"name":"will","age":"21","height":"73","unit":"inches"},{"name":"kait","age":"20","height":"71","unit":"inches"}]'
 
     test_d = json.loads(test)
 
@@ -13,10 +14,9 @@ def main():
 
     fm = File_Management()
 
-    fm.save(path='test/2024/03/09', file_name='extended_family.json', content=test_b)
+    await fm.save(path='test/2024/03/09', file_name='whole3_family.json', content=test_b)
 
 
 
 if __name__ == "__main__":
-    main()
-
+    asyncio.run(main())

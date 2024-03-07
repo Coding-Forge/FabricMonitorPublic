@@ -106,31 +106,28 @@ class Bob:
         and scan dates
         """
         sp = json.loads(self.app_settings['ServicePrincipal'])
-        FF = File_Table_Management(
-            tenant_id=sp['TenantId'],
-            client_id=sp['AppId'],
-            client_secret=sp['AppSecret'],
-            workspace_name=self.app_settings['WorkspaceName']
-        )
-        fsc = FF.fsc
+        FF = File_Table_Management()
+        fsc = FF.fsc #await FF.get_file_system_client()
+        try:
+            paths = fsc.get_paths(path=path)
+            found = False
+            for p in paths:
+                if file_name in p.name:
+                    found = True
+                    break
+        except TypeError as te:
+            print(f"this is an error {te}")
 
-        paths = fsc.get_paths(path=path)
-        found = False
-        for p in paths:
-            if file_name in p.name:
-                found = True
-                break
-        
         # create a directory client
-        dc = FF.create_directory_client(fsc, path=path)
-        
+        dc = FF.create_directory_client(path=path)
         if found:
             try:
+                
                 FF.download_file_from_directory(directory_client=dc, local_path="./",file_name=file_name)
-
+        
                 with open(file_name, 'r') as file:
                     f = file.read()
-
+        
                 return f
                                                 
             except Exception as e:
@@ -142,15 +139,15 @@ class Bob:
                 cfg["lastFullScan"] = (datetime.now() + timedelta(days=-30)).strftime('%Y-%m-%dT%H:%M:%SZ')
             else:
                 cfg["lastRun"] = (datetime.now() + timedelta(days=-30)).strftime('%Y-%m-%dT%H:%M:%SZ')
-
+        
             try:
                 with open(file_name, 'w') as file:
                     file.write(json.dumps(cfg))
 
-                folder = FF.create_directory(file_system_client=FF.fsc, directory_name=path)    
-                FF.upload_file_to_directory(directory_client=folder,local_path= "./", file_name=file_name)                
-
-                return json.dumps(cfg)
+                folder = await FF.create_directory(file_system_client=FF.fsc, directory_name=path)    
+                await FF.upload_file_to_directory(directory_client=folder,local_path= "./", file_name=file_name)                
+       
+                return await json.dumps(cfg)
             except Exception as e:
                 print("An exception occurred while creating file:", str(e))
 
@@ -163,12 +160,8 @@ class Bob:
         saves a json file that has information about the last run
         """
         sp = json.loads(self.app_settings['ServicePrincipal'])
-        FF = File_Table_Management(
-            tenant_id=sp['TenantId'],
-            client_id=sp['AppId'],
-            client_secret=sp['AppSecret'],
-            workspace_name=self.app_settings['WorkspaceName']
-        )
+        FF = File_Table_Management()
+            
         fsc = FF.fsc
 
         cfg = dict()

@@ -27,7 +27,11 @@ class Blob_File_Management:
     def read_from_file(self, blob_name):
         pass
 
-    def write_to_file(self, blob_name, content):
+    async def write_to_file(self, blob_name, content):
+        """
+        param blob_name is a string of the path where you want to save your file
+        param content is a byte variable that can be uploaded to blob storage
+        """
 
         blob_client = BlobClient(
             account_url=self.storage_url, 
@@ -36,9 +40,6 @@ class Blob_File_Management:
             credential=self.credentials
         )
 
-        print(f"I got here: {content}")
-
-        #with open('local_file.txt', 'rb') as local_file:
         blob_client.upload_blob(data=content)
 
         
