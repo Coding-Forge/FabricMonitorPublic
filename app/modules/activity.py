@@ -132,8 +132,6 @@ async def main():
 
             pivotDate += timedelta(days=1)
 
-
-        #await get_activity(pivotDate=pivotDate)   
     await get_activity()
 
 

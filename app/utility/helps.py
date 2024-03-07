@@ -1,6 +1,5 @@
 import os
 import json
-import requests
 import logging
 import msal
 import aiohttp
