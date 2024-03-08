@@ -66,6 +66,7 @@ class File_Table_Management:
         with open(file=os.path.join(local_path, file_name), mode="rb") as data:
             await file_client.upload_data(data, overwrite=True)
 
+    # needs to be synchronous as multiple functions rely on the download to complete before continuing
     def download_file_from_directory(self, directory_client: DataLakeDirectoryClient, local_path: str, file_name: str):
         file_client = directory_client.get_file_client(file_name)
 

@@ -5,7 +5,8 @@ import asyncio
 import time
 import requests
 
-from ..utility.fab2 import File_Table_Management
+#from ..utility.fab2 import File_Table_Management
+from app.utility.file_management import File_Management
 from ..utility.helps import Bob
 from datetime import datetime, timedelta
 
@@ -31,16 +32,10 @@ async def main():
     headers['Content-Type'] = 'application/json'
 
     sp = json.loads(settings['ServicePrincipal'])
-    FF = File_Table_Management(
-        tenant_id=sp['TenantId'],
-        client_id=sp['AppId'],
-        client_secret=sp['AppSecret'],
-        workspace_name=settings['WorkspaceName']
-    )
 
     today = datetime.now()
 
-    lakehouse_catalog = f"{settings['LakehouseName']}.Lakehouse/Files/graph/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
+    lakehouse_catalog = f"graph/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
     Groups = False
 ##################### INTIALIZE THE CONFIGURATION #####################
 
@@ -73,6 +68,8 @@ async def main():
             }
         )
 
+    fm = File_Management()
+
     for call in graphCalls:
         for key, value in call.items():
             #print(f"Getting {key} from {value['GraphURL']} and file path {value['FilePath']}")
@@ -81,8 +78,11 @@ async def main():
             response = requests.get(value['GraphURL'], headers=headers)
             if response.status_code == 200:
                 result = response.json()
-                dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_catalog)
-                await FF.write_json_to_file(directory_client=dc, file_name=value['FilePath'], json_data=result)
+
+                await fm.save(path=lakehouse_catalog, file_name=value['FilePath'], content=result)
+
+                #dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_catalog)
+                #await FF.write_json_to_file(directory_client=dc, file_name=value['FilePath'], json_data=result)
 
 # TODO: Fix error that comes from return application/json
 # doesn't kill the job but does throw an error

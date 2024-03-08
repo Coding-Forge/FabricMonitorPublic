@@ -5,8 +5,8 @@ import asyncio
 import time
 import requests
 
-from ..utility.fab2 import File_Table_Management
 from ..utility.helps import Bob
+from app.utility.file_management import File_Management
 from datetime import datetime, timedelta
 
 ####### CATALOG PRECONFIGURATION #######
@@ -27,16 +27,10 @@ async def main():
     headers['Content-Type'] = 'application/json'
 
     sp = json.loads(settings['ServicePrincipal'])
-    FF = File_Table_Management(
-        tenant_id=sp['TenantId'],
-        client_id=sp['AppId'],
-        client_secret=sp['AppSecret'],
-        workspace_name=settings['WorkspaceName']
-    )
 
     today = datetime.now()
 
-    lakehouse_dir = f"{settings['LakehouseName']}.Lakehouse/Files/tenant/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
+    lakehouse_dir = f"tenant/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
 
     tenantUrl = "https://api.fabric.microsoft.com/v1/admin/tenantsettings"
     apiResource = "https://api.fabric.microsoft.com/"
@@ -48,13 +42,14 @@ async def main():
  
     url = "https://api.fabric.microsoft.com/v1/admin/tenantsettings"
     
+    fm = File_Management()
 
     response = requests.get(url=url, headers=headers)
     if response.status_code == 200:
         result = response.json()
-
-        dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
-        await FF.write_json_to_file(directory_client=dc, file_name="tenant-settings.json", json_data=result)
+        await fm.save(path=lakehouse_dir, file_name="tenant-settings.json", content=result)
+#        dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
+#        await FF.write_json_to_file(directory_client=dc, file_name="tenant-settings.json", json_data=result)
 
 # TODO: Fix error that comes from return application/json
 # doesn't kill the job but does throw an error

@@ -9,7 +9,6 @@ from app.modules.tenant import main as Tenant
 from app.modules.refreshhistory import main as RefreshHistory
 
 from app.utility.helps import Bob
-from app.utility.fab2 import File_Table_Management
 
 async def tasker(name, work_queue):
     while not work_queue.empty():
@@ -32,25 +31,14 @@ async def main():
     # Your code here
     bob = Bob()
     settings = bob.get_settings()
-    #
-    ## get POWER BI context
-    #headers = bob.get_context()
-#
-    #lakehouse_catalog = f"{settings['LakehouseName']}.Lakehouse.Files/catalog/"
-    #
-    #FF = File_Table_Management(
-    #    tenant_id=settings['ServicePrincipal']['TenantId'],
-    #    client_id=settings['ServicePrincipal']['AppId'],
-    #    client_secret=settings['ServicePrincipal']['AppSecret'],
-    #    workspace_name=settings['WorkspaceName']
-    #)
 
-    #asyncio.run(async_main())
+    modules = settings.get("ApplicationModules").replace(" ","").split(",")
+    classes = [globals()[module] for module in modules]
 
     work_queue = asyncio.Queue()
-    modules = [Activity, Apps, Catalog, Graph, Tenant, RefreshHistory]
+    #modules = [Activity, Apps, Catalog, Graph, Tenant, RefreshHistory]
 
-    for module in modules:
+    for module in classes:
         await work_queue.put(module)
 
     with Timer(text="\nTotal elapsed time: {:.1f}"):
@@ -63,8 +51,10 @@ async def main():
             asyncio.create_task(task("Refresh History", work_queue))
         )
 
-    await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
-    await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+    #TODO: change this to save the state.json file to the appropriate location
+        
+    #await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
+    #await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -6,7 +6,8 @@ from codetiming import Timer
 
 from datetime import datetime, timedelta
 from ..utility.helps import Bob
-from ..utility.fab2 import File_Table_Management
+#from ..utility.fab2 import File_Table_Management
+from app.utility.file_management import File_Management
 
 ####### CATALOG PRECONFIGURATION #######
 catalog_types = ["scan","snapshots"]
@@ -34,12 +35,6 @@ headers = bob.get_context()
 lakehouse_catalog = f"{settings['LakehouseName']}.Lakehouse.Files/catalog/"
 
 sp = json.loads(settings['ServicePrincipal'])
-FF = File_Table_Management(
-    tenant_id=sp['TenantId'],
-    client_id=sp['AppId'],
-    client_secret=sp['AppSecret'],
-    workspace_name=settings['WorkspaceName']
-)
 
 ##################### INTIALIZE THE CONFIGURATION #####################
 
@@ -89,11 +84,12 @@ async def get_workspace_info(workspace_groups):
                 else:
 
                     today = datetime.utcnow()
-
-                    path = f"{settings['LakehouseName']}.Lakehouse/Files/catalog/scans/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
-                    dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=path)
+                    fm = File_Management()
+                    path = f"catalog/scans/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
+                    #dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=path)
                     try:
-                        await FF.write_json_to_file(directory_client=dc, file_name="scanResults.json", json_data=scanResult)
+                        await fm.save(path=path, file_name="scanResults.json", content=scanResult)
+                        #await FF.write_json_to_file(directory_client=dc, file_name="scanResults.json", json_data=scanResult)
                     except TypeError as e:
                         print(f"Please fix the async to handle the Error: {e} -- is this the issue")
 

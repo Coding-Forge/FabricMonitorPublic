@@ -40,7 +40,7 @@ class Blob_File_Management:
             credential=self.credentials
         )
 
-        blob_client.upload_blob(data=content)
+        blob_client.upload_blob(data=content, overwrite=True)
 
         
 

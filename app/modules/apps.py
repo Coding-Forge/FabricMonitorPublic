@@ -4,8 +4,10 @@ import logging
 import asyncio
 import time
 
-from ..utility.fab2 import File_Table_Management
+#from ..utility.fab2 import File_Table_Management
 from ..utility.helps import Bob
+
+from app.utility.file_management import File_Management
 from datetime import datetime, timedelta
 
 ####### CATALOG PRECONFIGURATION #######
@@ -30,14 +32,9 @@ async def main():
     headers = bob.get_context()
     
     sp = json.loads(settings['ServicePrincipal'])
-    FF = File_Table_Management(
-        tenant_id=sp['TenantId'],
-        client_id=sp['AppId'],
-        client_secret=sp['AppSecret'],
-        workspace_name=settings['WorkspaceName']
-    )
+    
 
-    lakehouse_catalog = f"{settings['LakehouseName']}.Lakehouse/Files/catalog/"
+    lakehouse_catalog = f"catalog/"
 
 ##################### INTIALIZE THE CONFIGURATION #####################
 
@@ -80,24 +77,26 @@ async def main():
     if "ERROR" not in result:
 
         ## check if file already exists
-        lakehouse_dir = f"{lakehouse_catalog}{snapshots}"
+        path = f"{lakehouse_catalog}{snapshots}"
 
         #print(f"Checking if {lakehouse_dir} exists")
 
+        #try:
+        #    paths = FF.fsc.get_paths(lakehouse_dir)
+        #    for path in paths:
+        #        #print(f"Path: {path.name}")
+        #        if "app.json" in path.name:
+        #            raise RuntimeError('app.json already exists')
+        #except Exception as e:
+        #    print(f"Error: {e} - continue with executing code")    
+
+        #dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
+
         try:
-            paths = FF.fsc.get_paths(lakehouse_dir)
-            for path in paths:
-                #print(f"Path: {path.name}")
-                if "app.json" in path.name:
-                    exit(0)
+            fm = File_Management()
+            await fm.save(path=path, file_name="app.json", content=result)
 
-        except Exception as e:
-            print(f"Error: {e} - continue with executing code")    
-
-        dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
-
-        try:
-            await FF.write_json_to_file(directory_client=dc, file_name="apps.json", json_data=result)
+            #await FF.write_json_to_file(directory_client=dc, file_name="apps.json", json_data=result)
         except TypeError as e:
             print(f"Please fix the async to handle the Error: {e} -- is this the issue")
         
