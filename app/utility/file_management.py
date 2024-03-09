@@ -16,21 +16,29 @@ class File_Management(File_Table_Management, Blob_File_Management):
             self.storage_location = "lakehouse"
             
 
-    async def save(self, path:str, file_name:str, content:dict):
+    async def save(self, path:str, file_name:str, content):
         """
         param path is the location to where the content will be saved
         param file_name is the name of the file to be saved
         param content is a dictionary that is converted to bytes and saved as the path and file name
         """
+        
+        try:
 
-        json_string = json.dumps(content)
-        json_bytes = json_string.encode('utf-8')
+            if isinstance(content, dict) or isinstance(content, list):
+                content = json.dumps(content)
+                content = content.encode('utf-8')
+            else:
+                content = content.encode('utf-8')
 
-        if self.storage_location == "blob":
+            if self.storage_location == "blob":
 
-            path = f"{path}{file_name}"
-            
-            await self.bfm.write_to_file(blob_name=path, content=json_bytes)
+                path = f"{path}{file_name}"
+                
+                await self.bfm.write_to_file(blob_name=path, content=content)
+        except Exception as e:
+            print(f"Error: {e}")
+
         else:
             #TODO: create a directory
             #TODO: upload/stream to location
@@ -40,5 +48,5 @@ class File_Management(File_Table_Management, Blob_File_Management):
             path = path.replace("//","/")
 
             dc = await self.ftm.create_directory(directory_name=path)
-            await self.ftm.write_json_to_file(directory_client=dc, file_name=file_name, json_data=json_bytes)
+            await self.ftm.write_json_to_file(directory_client=dc, file_name=file_name, json_data=content)
 

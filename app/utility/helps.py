@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import yaml
 import msal
 import aiohttp
 from typing import Dict, Any, Coroutine
@@ -96,8 +97,6 @@ class Bob:
         """
         format = "%Y-%m-%dT%H:%M:%SZ"
 
-        print(f"What is the date time {date_time}")
-
         if isinstance(date_time, datetime):
             date_time = date_time.strftime(format)
             
@@ -105,7 +104,35 @@ class Bob:
     
         return datetime_str
 
-    async def get_state(self, path, file_name="state.json"):
+    def get_state(self, path, file_name="state.yaml"):
+        with open('state.yaml', 'r') as file:
+            data = yaml.safe_load(file)        
+
+        return data  
+    
+    def save_state(self, path, data:dict, file_name="state.yaml"):
+        """
+        Save the state.yaml file
+        """
+
+        lastRun = data.get("activity").get("lastRun")
+        catalog_lastRun = data.get("catalog").get("lastRun")
+        catalog_lastFulScan = data.get("catalog").get("lastFullScan")       
+
+        if self.convert_dt_str(lastRun) < datetime.now():
+            data["activity"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        if self.convert_dt_str(catalog_lastRun) < datetime.now():
+            data["catalog"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        if datetime.now() - self.convert_dt_str(catalog_lastFulScan) > timedelta(days=30):
+            data["catalog"]["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        with open('state.yaml', 'w') as file:
+            yaml.dump(data, file)
+
+
+    async def get_state2(self, path, file_name="state.json"):
         """
         takes a path arguement as string 
         takes a file_name as a string (optional parameter)
@@ -160,7 +187,7 @@ class Bob:
 
     logging.info('Started')
 
-    async def save_state(self, path, file_name="state.json"):
+    async def save_state2(self, path, file_name="state.json"):
         """
         takes a path arguement as string 
         takes a file_name as a string (optional parameter)

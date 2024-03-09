@@ -39,16 +39,16 @@ async def main():
 ##################### INTIALIZE THE CONFIGURATION #####################
 
     try:
-        state = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+        state = bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
     except Exception as e:
         print(f"Error: {e}")
 
     if isinstance(state, str):
-        LastRun = json.loads(state).get("lastRun")
-        LastFullScan = json.loads(state).get("lastFullScan")
+        LastRun = json.loads(state).get("catalog").get("lastRun")
+        LastFullScan = json.loads(state).get("catalog").get("lastFullScan")
     else:
-        LastRun = state.get("lastRun")
-        LastFullScan = state.get("lastFullScan")
+        LastRun = state.get("catalog").get("lastRun")
+        LastFullScan = state.get("catalog").get("lastFullScan")
 
     if LastRun is None:
         LastRun = datetime.now()

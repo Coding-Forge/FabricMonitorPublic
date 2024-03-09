@@ -69,13 +69,12 @@ async def activity_events(url=None, headers=None, pivotDate=None, pageIndex=1):
 async def main():
     logging.info('Started')
     
-    config = await bob.get_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
-    #config = bob.get_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
+    config = bob.get_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
 
     if isinstance(config, str):
-        lastRun = json.loads(config).get("lastRun")
+        lastRun = json.loads(config).get("activity").get("lastRun")
     else:
-        lastRun = config.get("lastRun")
+        lastRun = config.get("activity").get("lastRun")
 
     # if lastRun is recorded then proceed from there
     lastRun_tm = bob.convert_dt_str(lastRun)

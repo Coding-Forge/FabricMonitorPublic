@@ -99,13 +99,14 @@ async def get_workspace_info_wrapper(subgroup):
 
 
 async def main():
-    state = await bob.get_state(f"/{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+    state = bob.get_state(f"/{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+    
     if isinstance(state, str):
-        LastRun = json.loads(state).get("lastRun")
-        LastFullScan = json.loads(state).get("lastFullScan")
+        LastRun = json.loads(state).get("catalog").get("lastRun")
+        LastFullScan = json.loads(state).get("catalog").get("lastFullScan")
     else:
-        LastRun = state.get("lastRun")
-        LastFullScan = state.get("lastFullScan")
+        LastRun = state.get("catalog").get("lastRun")
+        LastFullScan = state.get("catalog").get("lastFullScan")
 
     if LastRun is None:
         LastRun = datetime.now()

@@ -1,5 +1,6 @@
 import asyncio
 import json
+import yaml
 
 from codetiming import Timer
 from app.modules.activity import main as Activity
@@ -11,6 +12,7 @@ from app.modules.refreshhistory import main as RefreshHistory
 from datetime import datetime, timedelta
 from app.utility.helps import Bob
 from app.utility.file_management import File_Management
+
 
 async def tasker(name, work_queue):
     while not work_queue.empty():
@@ -34,6 +36,9 @@ async def main():
     bob = Bob()
     settings = bob.get_settings()
 
+    # get the state.yaml file that include information about the last run
+    current_state = bob.get_state("local")
+
     # get the modules selected in the configuration for the application
     modules = settings.get("ApplicationModules").replace(" ","").split(",")
     classes = [globals()[module] for module in modules]
@@ -53,21 +58,12 @@ async def main():
             asyncio.create_task(task("Refresh History", work_queue))
         )
 
-    #TODO: change this to save the state.json file to the appropriate location
-        
-    #await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
-    #await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
-        
 
-
+    # this has all the information needed to modify the state.yaml file
+    bob.save_state(path="local", data=current_state)
+    
     fm = File_Management()
-
-
-    cfg = dict()
-
-    cfg["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
-    cfg["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
-    await fm.save(path="", file_name="state.json",content=cfg)
+    await fm.save("local", "state.yaml", current_state)
 
 
 if __name__ == "__main__":
