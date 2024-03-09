@@ -107,6 +107,12 @@ async def main():
         LastRun = state.get("lastRun")
         LastFullScan = state.get("lastFullScan")
 
+    if LastRun is None:
+        LastRun = datetime.now()
+
+    if LastFullScan is None:
+        LastFullScan = datetime.now()     
+
     lastRun_tm = bob.convert_dt_str(LastRun)
     lastFullScan_tm = bob.convert_dt_str(LastFullScan)
 

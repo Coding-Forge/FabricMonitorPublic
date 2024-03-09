@@ -79,7 +79,9 @@ async def main():
             if response.status_code == 200:
                 result = response.json()
 
-                await fm.save(path=lakehouse_catalog, file_name=value['FilePath'], content=result)
+                info = result.get("value")
+
+                await fm.save(path=lakehouse_catalog, file_name=value['FilePath'], content=info)
 
                 #dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_catalog)
                 #await FF.write_json_to_file(directory_client=dc, file_name=value['FilePath'], json_data=result)

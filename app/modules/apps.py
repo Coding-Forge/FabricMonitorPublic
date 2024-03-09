@@ -50,6 +50,12 @@ async def main():
         LastRun = state.get("lastRun")
         LastFullScan = state.get("lastFullScan")
 
+    if LastRun is None:
+        LastRun = datetime.now()
+
+    if LastFullScan is None:
+        LastFullScan = datetime.now()        
+
     lastRun_tm = bob.convert_dt_str(LastRun)
     lastFullScan_tm = bob.convert_dt_str(LastFullScan)
 
@@ -57,13 +63,13 @@ async def main():
     pivotFullScan = lastFullScan_tm + timedelta(days=-30)    
 
 # create a file structure for the api results
-    scans = f"scan/{today.strftime('%Y')}/{today.strftime('%m')}/"
+    #scans = f"scan/{today.strftime('%Y')}/{today.strftime('%m')}"
     snapshots =f"snapshots/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
 
     snapshotFiles = list()
 
     # TODO: get all the scans for apps
-    filePath = f"{snapshots}/apps.json"
+    filePath = f"{snapshots}apps.json"
     snapshotFiles.append(filePath)
     logging.info(f"Headers: {headers}")  
 
@@ -94,7 +100,10 @@ async def main():
 
         try:
             fm = File_Management()
-            await fm.save(path=path, file_name="app.json", content=result)
+
+            #only grab the value section from result
+            info=result.get("value")
+            await fm.save(path=path, file_name="apps.json", content=info)
 
             #await FF.write_json_to_file(directory_client=dc, file_name="apps.json", json_data=result)
         except TypeError as e:

@@ -7,6 +7,7 @@ from typing import Dict, Any, Coroutine
 from dotenv import load_dotenv, dotenv_values
 from datetime import datetime, timedelta
 from app.utility.fabric import File_Table_Management
+from datetime import datetime
 
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
@@ -94,6 +95,12 @@ class Bob:
         date_time: datetime object
         """
         format = "%Y-%m-%dT%H:%M:%SZ"
+
+        print(f"What is the date time {date_time}")
+
+        if isinstance(date_time, datetime):
+            date_time = date_time.strftime(format)
+            
         datetime_str = datetime.strptime(date_time, format)
     
         return datetime_str

@@ -42,7 +42,7 @@ async def activity_events(url=None, headers=None, pivotDate=None, pageIndex=1):
             audits.append(result.get("activityEventEntities"))
 
         # create the folder structure for the output path
-        lakehousePath = f"activity/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}"
+        lakehousePath = f"activity/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/"
 
         # do a for loop until all json arrays in audits are read and written to storage
         for audit in audits:

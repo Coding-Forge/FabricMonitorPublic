@@ -1,14 +1,16 @@
 import asyncio
-from codetiming import Timer
+import json
 
+from codetiming import Timer
 from app.modules.activity import main as Activity
 from app.modules.apps import main as Apps
 from app.modules.catalog import main as Catalog
 from app.modules.graph import main as Graph
 from app.modules.tenant import main as Tenant
 from app.modules.refreshhistory import main as RefreshHistory
-
+from datetime import datetime, timedelta
 from app.utility.helps import Bob
+from app.utility.file_management import File_Management
 
 async def tasker(name, work_queue):
     while not work_queue.empty():
@@ -32,11 +34,11 @@ async def main():
     bob = Bob()
     settings = bob.get_settings()
 
+    # get the modules selected in the configuration for the application
     modules = settings.get("ApplicationModules").replace(" ","").split(",")
     classes = [globals()[module] for module in modules]
 
     work_queue = asyncio.Queue()
-    #modules = [Activity, Apps, Catalog, Graph, Tenant, RefreshHistory]
 
     for module in classes:
         await work_queue.put(module)
@@ -55,6 +57,18 @@ async def main():
         
     #await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
     #await bob.save_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+        
+
+
+    fm = File_Management()
+
+
+    cfg = dict()
+
+    cfg["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+    cfg["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+    await fm.save(path="", file_name="state.json",content=cfg)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
