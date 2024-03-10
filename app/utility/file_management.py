@@ -44,8 +44,6 @@ class File_Management(File_Table_Management, Blob_File_Management):
                 path = f"{self.settings['LakehouseName']}.Lakehouse/Files/{path}"   
 
                 path = path.replace("//","/")
-
-                    #dc = await self.ftm.create_directory(directory_name=path)
                 
                 await self.ftm.write_json_to_file(path=path, file_name=file_name, json_data=content)
 

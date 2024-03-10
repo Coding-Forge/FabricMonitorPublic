@@ -86,12 +86,7 @@ class File_Table_Management:
 
         cpath = f"{path}{file_name}"
 
-        #print(cpath)
-
-        if await self.fsc.exists(file_name):
-            self.fsc.upload_data(json_bytes, overwrite=True)
-        else:
-            directory_client = self.create_directory_client(path)
-            file_client = directory_client.get_file_client(file_name)
-            file_client.upload_data(json_bytes, overwrite=True)
+        dc = self.fsc.get_directory_client(path)
+        file_client = dc.get_file_client(file_name)
+        file_client.upload_data(json_bytes, overwrite=True)
 
