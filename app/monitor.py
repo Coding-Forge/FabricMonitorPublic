@@ -58,12 +58,23 @@ async def main():
             asyncio.create_task(task("Refresh History", work_queue))
         )
 
-
     # this has all the information needed to modify the state.yaml file
-    bob.save_state(path="local", data=current_state)
-    
-    fm = File_Management()
-    await fm.save("local", "state.yaml", current_state)
+
+
+    tm = True
+    print("current_state", current_state)
+
+    if tm:
+        try:
+            bob.save_state(path="./brandon/campbell/test/", data=current_state)
+        except Exception as e:
+            print(f"Bob Error: {e}")
+    else:    
+        try:
+            fm = File_Management()
+            await fm.save("", "state.yaml", current_state)
+        except Exception as e:
+            print(f"fm Error: {e}")
 
 
 if __name__ == "__main__":

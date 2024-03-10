@@ -34,19 +34,22 @@ class File_Management(File_Table_Management, Blob_File_Management):
             if self.storage_location == "blob":
 
                 path = f"{path}{file_name}"
-                
+                #print(path)
                 await self.bfm.write_to_file(blob_name=path, content=content)
+
+            else:
+                #TODO: create a directory
+                #TODO: upload/stream to location
+
+                path = f"{self.settings['LakehouseName']}.Lakehouse/Files/{path}"   
+
+                path = path.replace("//","/")
+
+                    #dc = await self.ftm.create_directory(directory_name=path)
+                
+                await self.ftm.write_json_to_file(path=path, file_name=file_name, json_data=content)
+
         except Exception as e:
             print(f"Error: {e}")
 
-        else:
-            #TODO: create a directory
-            #TODO: upload/stream to location
-
-            path = f"{self.settings['LakehouseName']}.Lakehouse/Files/{path}"   
-
-            path = path.replace("//","/")
-
-            dc = await self.ftm.create_directory(directory_name=path)
-            await self.ftm.write_json_to_file(directory_client=dc, file_name=file_name, json_data=content)
 

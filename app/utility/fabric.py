@@ -62,7 +62,11 @@ class File_Table_Management:
 
     async def upload_file_to_directory(self, directory_client: DataLakeDirectoryClient, local_path: str, file_name: str):
         file_client = directory_client.get_file_client(file_name)
-
+        
+        if await file_client.exists():
+            print(f"File '{file_name}' already exists.")
+            return
+        
         with open(file=os.path.join(local_path, file_name), mode="rb") as data:
             await file_client.upload_data(data, overwrite=True)
 
@@ -76,14 +80,18 @@ class File_Table_Management:
             local_file.close()
 
 
-    async def write_json_to_file(self, directory_client: DataLakeDirectoryClient, file_name: str, json_data):
-        try:
-            file_client = directory_client.get_file_client(file_name)
-        except Exception as e:
-            print("treat an error as if the file does not exist")
-            directory_client.create_file(file_name)
+    async def write_json_to_file(self, path:str, file_name: str, json_data):
 
-        #json_string = json.dumps(json_data)
-        #json_bytes = json_string.encode('utf-8')
         json_bytes = json_data
-        file_client.upload_data(json_bytes, overwrite=True)
+
+        cpath = f"{path}{file_name}"
+
+        #print(cpath)
+
+        if await self.fsc.exists(file_name):
+            self.fsc.upload_data(json_bytes, overwrite=True)
+        else:
+            directory_client = self.create_directory_client(path)
+            file_client = directory_client.get_file_client(file_name)
+            file_client.upload_data(json_bytes, overwrite=True)
+

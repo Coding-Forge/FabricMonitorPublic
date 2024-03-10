@@ -22,7 +22,7 @@ fm = File_Management()
 async def record_audits(path, audit, pivotDate, pageIndex=1):
     pageIndex = str(pageIndex).zfill(5)
     lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
-    #await FF.write_json_to_file(directory_client=DirectoryClient, file_name=lakehouseFile, json_data=audit)
+
     await fm.save(path=path, file_name=lakehouseFile, content=audit)
     flagNoActivity = False
 

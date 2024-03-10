@@ -128,9 +128,18 @@ class Bob:
         if datetime.now() - self.convert_dt_str(catalog_lastFulScan) > timedelta(days=30):
             data["catalog"]["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-        with open('state.yaml', 'w') as file:
-            yaml.dump(data, file)
 
+        path = f"{path}"
+
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
+            os.chdir(path)
+            
+            with open(file_name, "w") as file:
+                yaml.dump(data, file)
+        else:
+            with open(file_name, "w") as file:
+                yaml.dump(data, file)
 
     async def get_state2(self, path, file_name="state.json"):
         """
