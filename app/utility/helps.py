@@ -95,7 +95,9 @@ class Bob:
         Convert a datetime object to a string
         date_time: datetime object
         """
-        format = "%Y-%m-%dT%H:%M:%SZ"
+        format = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+        #datetime_str = date_time.strftime("%Y%m%d%H%M%S%f")
 
         if isinstance(date_time, datetime):
             date_time = date_time.strftime(format)
@@ -104,13 +106,13 @@ class Bob:
     
         return datetime_str
 
-    def get_state(self, path, file_name="state.yaml"):
+    def get_state(self, path="", file_name="state.yaml"):
         with open('state.yaml', 'r') as file:
             data = yaml.safe_load(file)        
 
         return data  
     
-    def save_state(self, path, data:dict, file_name="state.yaml"):
+    def save_state(self, path="", data:dict="", file_name="state.yaml"):
         """
         Save the state.yaml file
         """
@@ -120,13 +122,13 @@ class Bob:
         catalog_lastFulScan = data.get("catalog").get("lastFullScan")       
 
         if self.convert_dt_str(lastRun) < datetime.now():
-            data["activity"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+            data["activity"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
 
         if self.convert_dt_str(catalog_lastRun) < datetime.now():
-            data["catalog"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+            data["catalog"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
 
         if datetime.now() - self.convert_dt_str(catalog_lastFulScan) > timedelta(days=30):
-            data["catalog"]["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+            data["catalog"]["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
 
 
         path = f"{path}"
@@ -134,7 +136,7 @@ class Bob:
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
             os.chdir(path)
-            
+
             with open(file_name, "w") as file:
                 yaml.dump(data, file)
         else:

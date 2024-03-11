@@ -61,20 +61,15 @@ async def main():
     # this has all the information needed to modify the state.yaml file
 
 
-    tm = True
-    print("current_state", current_state)
-
-    if tm:
-        try:
-            bob.save_state(path="./brandon/campbell/test/", data=current_state)
-        except Exception as e:
-            print(f"Bob Error: {e}")
-    else:    
-        try:
-            fm = File_Management()
-            await fm.save("", "state.yaml", current_state)
-        except Exception as e:
-            print(f"fm Error: {e}")
+    try:
+        bob.save_state(path="./brandon/campbell/test/", data=current_state)
+    except Exception as e:
+        print(f"Bob Error: {e}")
+    try:
+        fm = File_Management()
+        await fm.save("", "state.yaml", current_state)
+    except Exception as e:
+        print(f"fm Error: {e}")
 
 
 if __name__ == "__main__":

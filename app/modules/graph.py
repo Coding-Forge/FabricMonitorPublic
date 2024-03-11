@@ -36,7 +36,8 @@ async def main():
     today = datetime.now()
 
     lakehouse_catalog = f"graph/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
-    Groups = False
+    Groups = bool(settings.get("GraphExtractGroups"))
+    
 ##################### INTIALIZE THE CONFIGURATION #####################
 
 #    state = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")

@@ -5,8 +5,7 @@ import asyncio
 from codetiming import Timer
 
 from datetime import datetime, timedelta
-from ..utility.helps import Bob
-#from ..utility.fab2 import File_Table_Management
+from app.utility.helps import Bob
 from app.utility.file_management import File_Management
 
 ####### CATALOG PRECONFIGURATION #######
@@ -38,9 +37,10 @@ sp = json.loads(settings['ServicePrincipal'])
 
 ##################### INTIALIZE THE CONFIGURATION #####################
 
+def RunFullScan(value=False):
+    FullScan = value
 
-
-async def get_workspace_info(workspace_groups):
+async def get_workspace_info(workspace_groups, FullScan=False):
     workspaceScanResults = []
     
     body = {
@@ -64,8 +64,13 @@ async def get_workspace_info(workspace_groups):
                 #print(f"Waiting for scan results, sleeping for {scanStatusSleepSeconds} seconds...")
                 #time.sleep(scanStatusSleepSeconds)
 
-                rest_api = f"admin/workspaces/scanStatus/{workspaceScanResult.get('id')}"
-                result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
+                try:
+                    rest_api = f"admin/workspaces/scanStatus/{workspaceScanResult.get('id')}"
+                    result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
+                except Exception as e:
+                    print(f"Error: {e} - sleeping for {throttleErrorSleepSeconds} seconds")
+                    await asyncio.sleep(throttleErrorSleepSeconds)
+
 
                 if "ERROR" in result:
                     print(f"Error: {result}")
@@ -88,19 +93,29 @@ async def get_workspace_info(workspace_groups):
                     path = f"catalog/scans/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
                     #dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=path)
                     try:
-                        await fm.save(path=path, file_name="scanResults.json", content=scanResult)
+                        if FullScan:
+                            file_name=f"scanResults.fullscan.json"
+                        else:
+                            file_name=f"scanResults.json"
+
+                        await fm.save(path=path, file_name=file_name, content=scanResult)
                         #await FF.write_json_to_file(directory_client=dc, file_name="scanResults.json", json_data=scanResult)
                     except TypeError as e:
                         print(f"Please fix the async to handle the Error: {e} -- is this the issue")
 
 
-async def get_workspace_info_wrapper(subgroup):
-    await get_workspace_info(workspace_groups=subgroup)
+async def get_workspace_info_wrapper(subgroup, FullScan=False):
+    await get_workspace_info(workspace_groups=subgroup, FullScan=FullScan)
 
 
 async def main():
-    state = bob.get_state(f"/{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+    FullScan = False
+#    state = bob.get_state(f"/{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+    state = bob.get_state()
     
+    getModifiedWorkspacesParams = settings.get("CatalogGetModifiedParameters")
+    getInfoDetails = settings.get("CatalogGetInfoParameters")
+
     if isinstance(state, str):
         LastRun = json.loads(state).get("catalog").get("lastRun")
         LastFullScan = json.loads(state).get("catalog").get("lastFullScan")
@@ -112,18 +127,25 @@ async def main():
         LastRun = datetime.now()
 
     if LastFullScan is None:
-        LastFullScan = datetime.now()     
+        LastFullScan = datetime.now() - timedelta(days=30)
+        FullScan = True     
 
     lastRun_tm = bob.convert_dt_str(LastRun)
     lastFullScan_tm = bob.convert_dt_str(LastFullScan)
 
-    pivotScan = lastRun_tm + timedelta(days=-30)
-    pivotFullScan = lastFullScan_tm + timedelta(days=-30)    
+    # pivotScan = lastRun_tm + timedelta(days=-30)
+    # pivotFullScan = lastFullScan_tm + timedelta(days=-30)    
 
+    if abs(lastFullScan_tm - lastRun_tm) >= timedelta(days=30):
+        FullScan = True
+        LastRun = (datetime.now()-timedelta(days=30)).strftime("%Y-%m-%d")
+    else:
+        LastRun = lastRun_tm.strftime("%Y-%m-%d")
 
-    rest_api = "admin/workspaces/modified?"
+    #GET https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified?modifiedSince={modifiedSince}&excludePersonalWorkspaces={excludePersonalWorkspaces}&excludeInActiveWorkspaces={excludeInActiveWorkspaces}
+
+    rest_api = f"admin/workspaces/modified?modifiedSince={LastRun}T00:00:00.0000000Z&{getModifiedWorkspacesParams}"
     result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
-
 
     workspaces = list()
 
@@ -171,14 +193,17 @@ async def main():
         for subgroup in groups:
             await work_queue.put(subgroup)
 
+    # put all groups into the queue
     while not work_queue.empty():
         subgroup = await work_queue.get()
         try:
-            await get_workspace_info_wrapper(subgroup=subgroup)
-        
+            if len(subgroup) > 0:
+                await get_workspace_info_wrapper(subgroup=subgroup, FullScan=FullScan)
+
         # Try to catch any 429 errors
         except Exception as e:
-            await asyncio.sleep(10)
+            print(f"Error: {e} - sleeping for {scanStatusSleepSeconds} seconds")
+            #await asyncio.sleep(scanStatusSleepSeconds)
 
 
 
