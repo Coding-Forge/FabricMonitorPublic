@@ -49,6 +49,9 @@ Your `.env` file will file will hold your information about what operations you 
 
 > NOTE: USE the enclosed .env.exmple file to build your `.env` file
 
+## Storing your Data  
+You can determine where your data will be stored. In your `.env` you need to fill in information for a blob container if you want to store information to blob. If you would like to use a **FABRIC** Lakehouse then fill in the name of the Lakehouse and its required information and lastly, if you would like your data saved locally you can fill in a location in the local directory value. If you would like more storage capabilities then submit an issue and it can be placed on the backlog for consideration
+
 ## Using the Application  
 This repository has three ways of using the application for gathering information from the Power BI and Fabric APIs. If you would like to deploy your application to a container then you can leverage the Dockerfiles in the containers folders. There are two Dockerfiles, one will execute the application upon startup and the other is set up to be run as a `CRON` job. Both of these images are built from the latest version of Ubuntu.
 
