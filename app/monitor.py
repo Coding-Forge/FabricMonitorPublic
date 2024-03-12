@@ -62,7 +62,7 @@ async def main():
 
 
     try:
-        bob.save_state(path="./brandon/campbell/test/", data=current_state)
+        bob.save_state(path=".", data=current_state)
     except Exception as e:
         print(f"Bob Error: {e}")
     try:
