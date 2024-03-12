@@ -24,6 +24,7 @@ class Blob_File_Management:
             tenant_id=self.sp['TenantId']
         )
 
+
     def read_from_file(self, blob_name):
         pass
 
@@ -33,12 +34,22 @@ class Blob_File_Management:
         param content is a byte variable that can be uploaded to blob storage
         """
 
-        blob_client = BlobClient(
-            account_url=self.storage_url, 
-            container_name=self.container_name, 
-            blob_name=blob_name, 
-            credential=self.credentials
-        )
+        conn_str = self.app_settings.get("StorageAccountConnStr")
+
+        if conn_str is None:
+            blob_client = BlobClient(
+                account_url=self.storage_url, 
+                container_name=self.container_name, 
+                blob_name=blob_name, 
+                credential=self.credentials
+            )
+
+        else:
+            blob_client = BlobClient.from_connection_string(
+                conn_str=conn_str,
+                container_name=self.container_name,
+                blob_name=blob_name,
+            )            
 
         blob_client.upload_blob(data=content, overwrite=True)
 
