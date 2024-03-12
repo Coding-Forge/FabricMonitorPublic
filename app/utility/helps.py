@@ -101,10 +101,14 @@ class Bob:
 
         if isinstance(date_time, datetime):
             date_time = date_time.strftime(format)
-            
-        datetime_str = datetime.strptime(date_time, format)
-    
-        return datetime_str
+
+        try:
+            datetime_str = datetime.strptime(date_time, format)
+            return datetime_str
+        except ValueError as ve:
+            print(f"An exception occurred while reading the file: {ve}")
+            exit()
+        
 
     def get_state(self, path="", file_name="state.yaml"):
         with open('state.yaml', 'r') as file:
@@ -122,13 +126,13 @@ class Bob:
         catalog_lastFulScan = data.get("catalog").get("lastFullScan")       
 
         if self.convert_dt_str(lastRun) < datetime.now():
-            data["activity"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
+            data["activity"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
         if self.convert_dt_str(catalog_lastRun) < datetime.now():
-            data["catalog"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
+            data["catalog"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
         if datetime.now() - self.convert_dt_str(catalog_lastFulScan) > timedelta(days=30):
-            data["catalog"]["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
+            data["catalog"]["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 
         path = f"{path}"

@@ -16,7 +16,7 @@ class Blob_File_Management:
     def __init__(self):
         self.app_settings = dotenv_values(".env")
         self.storage_url = self.app_settings.get("storage_url")
-        self.container_name = self.app_settings.get("container_name")
+        self.container_name = self.app_settings.get("StorageAccountContainerName")
         self.sp = json.loads(self.app_settings['ServicePrincipal'])
         self.credentials = ClientSecretCredential(
             client_id=self.sp['AppId'],
@@ -53,11 +53,4 @@ class Blob_File_Management:
 
         blob_client.upload_blob(data=content, overwrite=True)
 
-        
-
-
-
-
-        #blob_name = 'your-folder/sample-blob.txt'
-        
         

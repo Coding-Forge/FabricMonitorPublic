@@ -14,7 +14,7 @@ class File_Management(File_Table_Management, Blob_File_Management, Local_File_Ma
         self.lfm = Local_File_Management(self.settings['OutputPath'])
 
 
-        if self.settings['container_name']:
+        if self.settings['StorageAccountContainerName']:
             self.storage_location = "blob"
         elif self.settings["OutputPath"]:
             self.storage_location = "local"
@@ -28,7 +28,7 @@ class File_Management(File_Table_Management, Blob_File_Management, Local_File_Ma
         param: file_name is the name of the file to be saved
         param: content is a dictionary that is converted to bytes and saved as the path and file name
         """
-        
+
         try:
 
             if isinstance(content, dict) or isinstance(content, list):
