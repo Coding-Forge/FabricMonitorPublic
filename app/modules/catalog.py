@@ -194,16 +194,22 @@ async def main():
             await work_queue.put(subgroup)
 
     # put all groups into the queue
+    # build in a sleep for 10 seconds every 15 groups
+    # to avoid throttling
+            
+    counter = 0
     while not work_queue.empty():
+        counter += 1
         subgroup = await work_queue.get()
         try:
             if len(subgroup) > 0:
                 await get_workspace_info_wrapper(subgroup=subgroup, FullScan=FullScan)
-
         # Try to catch any 429 errors
         except Exception as e:
             print(f"Error: {e} - sleeping for {scanStatusSleepSeconds} seconds")
             #await asyncio.sleep(scanStatusSleepSeconds)
+        if counter % 15 == 0:
+            await asyncio.sleep(10)
 
 
 

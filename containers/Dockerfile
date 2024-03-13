@@ -17,7 +17,6 @@ RUN apt-get update && apt-get install -y python3.10 python3-distutils python3-pi
 # Install cron
 RUN apt-get update && apt-get -y install cron
 
-COPY config.json .
 COPY requirements.txt .
 COPY .env .
 
