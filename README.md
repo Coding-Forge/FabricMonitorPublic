@@ -49,6 +49,9 @@ Your `.env` file will file will hold your information about what operations you 
 
 > NOTE: USE the enclosed .env.exmple file to build your `.env` file
 
+## Storing your Data  
+You can determine where your data will be stored. In your `.env` you need to fill in information for a blob container if you want to store information to blob. If you would like to use a **FABRIC** Lakehouse then fill in the name of the Lakehouse and its required information and lastly, if you would like your data saved locally you can fill in a location in the local directory value. If you would like more storage capabilities then submit an issue and it can be placed on the backlog for consideration
+
 ## Using the Application  
 This repository has three ways of using the application for gathering information from the Power BI and Fabric APIs. If you would like to deploy your application to a container then you can leverage the Dockerfiles in the containers folders. There are two Dockerfiles, one will execute the application upon startup and the other is set up to be run as a `CRON` job. Both of these images are built from the latest version of Ubuntu.
 
@@ -75,6 +78,13 @@ docker build -t monitor/fabric:cron -f ./containers/Dockerfile
 
 ### Using your Docker Image
 Once you have your docker image created you can do several things with it. The first thing you can do is run the container from your local compute. Running the image locally gives the ability to see the application run and connect to the container to analyze the performance. Secondly, you could register your image with a container registry. Follow the link for publishing your image to [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli?tabs=azure-cli). At this point you can now use that image in multiple services that host container images.
+
+#### Register your image with Azure Container Registry
+
+```
+docker tag <localimage> <acr name>.azurecr.io/<image name>
+docker push <acr name>.azurecr.io/<image name>
+```
 
 Learn how to use [Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-app) with your image  
 Learn how to publish to [Azure Container Instance](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-tutorial-prepare-app)  with your image  

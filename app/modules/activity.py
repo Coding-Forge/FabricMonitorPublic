@@ -2,11 +2,11 @@ import asyncio
 import json
 import logging
 import random
-
+import time
 
 from datetime import datetime, timedelta
 from ..utility.helps import Bob
-from ..utility.fab2 import File_Table_Management
+from app.utility.file_management import File_Management
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
 ##### INTIALIZE THE CONFIGURATION #####
@@ -14,37 +14,16 @@ bob = Bob()
 settings = bob.get_settings()
 headers =  bob.get_context()
 
-sp = json.loads(settings['ServicePrincipal'])
-FF = File_Table_Management(
-    tenant_id=sp['TenantId'],
-    client_id=sp['AppId'],
-    client_secret=sp['AppSecret'],
-    workspace_name=settings['WorkspaceName']
-)
+fm = File_Management()
+
 
 ##### INTIALIZE THE CONFIGURATION #####
 
-async def record_audits(DirectoryClient, FF:File_Table_Management, audit, pivotDate, pageIndex=1):
-
-
-    #pageIndex = str(random.randint(100, 10000)).zfill(5)
+async def record_audits(path, audit, pivotDate, pageIndex=1):
     pageIndex = str(pageIndex).zfill(5)
     lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
-    await FF.write_json_to_file(directory_client=DirectoryClient, file_name=lakehouseFile, json_data=audit)
 
-    #if pageIndex == 1:
-    #    outputFilePath = f"{outputPath}/{pivotDate.strftime('%Y%m%d')}.json"
-    #    lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}.json"
-    #else:
-    #    outputFilePath = f"{outputPath}/{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
-    #    lakehouseFile = f"{pivotDate.strftime('%Y%m%d')}_{pageIndex}.json"
-
-    ### This can now be streamed using the write_json_to_file method
-    # TODO: convert audits to json
-    #with open(outputFilePath, "w") as file:
-    #    file.write(json.dumps(audit))
-    #FF.upload_file_to_directory(directory_client=dc, local_path=outputPath, file_name=lakehouseFile)
-
+    await fm.save(path=path, file_name=lakehouseFile, content=audit)
     flagNoActivity = False
 
 
@@ -63,18 +42,11 @@ async def activity_events(url=None, headers=None, pivotDate=None, pageIndex=1):
             audits.append(result.get("activityEventEntities"))
 
         # create the folder structure for the output path
-        localPath = f"{settings.get('OutputPath')}/activity/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/"
-        lakehousePath = f"{settings['LakehouseName']}.Lakehouse/Files/activity/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/"
-
-        # create the folder structure for the output path                       
-        #outputPath = bob.create_path(localPath)
-        outputPath = localPath
-
-        dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehousePath)
+        lakehousePath = f"activity/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/"
 
         # do a for loop until all json arrays in audits are read and written to storage
         for audit in audits:
-            await record_audits(dc, FF, audit, pivotDate, pageIndex=pageIndex)
+            await record_audits(path=lakehousePath, audit=audit, pivotDate=pivotDate, pageIndex=pageIndex)
 
         try:
             if result.get("continuationUri"):
@@ -96,14 +68,13 @@ async def activity_events(url=None, headers=None, pivotDate=None, pageIndex=1):
 
 async def main():
     logging.info('Started')
-
-    config = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
-
+    
+    config = bob.get_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
 
     if isinstance(config, str):
-        lastRun = json.loads(config).get("lastRun")
+        lastRun = json.loads(config).get("activity").get("lastRun")
     else:
-        lastRun = config.get("lastRun")
+        lastRun = config.get("activity").get("lastRun")
 
     # if lastRun is recorded then proceed from there
     lastRun_tm = bob.convert_dt_str(lastRun)

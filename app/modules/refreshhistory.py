@@ -5,7 +5,8 @@ import asyncio
 import time
 import requests
 
-from ..utility.fab2 import File_Table_Management
+#from ..utility.fab2 import File_Table_Management
+from app.utility.file_management import File_Management
 from ..utility.helps import Bob
 from datetime import datetime, timedelta
 
@@ -25,16 +26,10 @@ async def main():
     #headers['Content-Type'] = 'application/json'
 
     sp = json.loads(settings['ServicePrincipal'])
-    FF = File_Table_Management(
-        tenant_id=sp['TenantId'],
-        client_id=sp['AppId'],
-        client_secret=sp['AppSecret'],
-        workspace_name=settings['WorkspaceName']
-    )
 
     today = datetime.now()
 
-    lakehouse_dir = f"{settings['LakehouseName']}.Lakehouse/Files/datasetrefresh/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
+    lakehouse_dir = f"datasetrefresh/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
     file_name = "workspaces.datasets.refreshes.json"
 
 ##################### INTIALIZE THE CONFIGURATION #####################
@@ -43,13 +38,16 @@ async def main():
  
     rest_api = "admin/capacities/refreshables"
 
+    fm = File_Management()
 
     result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
     if "ERROR" in result:
         print(f"Error: {result}")
     else:
-        dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
-        await FF.write_json_to_file(directory_client=dc, file_name=file_name, json_data=result)
+        await fm.save(path=lakehouse_dir, file_name=file_name,content=result)
+
+        #dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
+        #await FF.write_json_to_file(directory_client=dc, file_name=file_name, json_data=result)
 
 # TODO: Fix error that comes from return application/json
 # doesn't kill the job but does throw an error

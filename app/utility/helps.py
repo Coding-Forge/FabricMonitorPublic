@@ -1,12 +1,14 @@
 import os
 import json
 import logging
+import yaml
 import msal
 import aiohttp
 from typing import Dict, Any, Coroutine
 from dotenv import load_dotenv, dotenv_values
 from datetime import datetime, timedelta
 from app.utility.fabric import File_Table_Management
+from datetime import datetime
 
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
@@ -93,12 +95,59 @@ class Bob:
         Convert a datetime object to a string
         date_time: datetime object
         """
-        format = "%Y-%m-%dT%H:%M:%SZ"
-        datetime_str = datetime.strptime(date_time, format)
-    
-        return datetime_str
+        format = "%Y-%m-%dT%H:%M:%S.%fZ"
 
-    async def get_state(self, path, file_name="state.json"):
+        #datetime_str = date_time.strftime("%Y%m%d%H%M%S%f")
+
+        if isinstance(date_time, datetime):
+            date_time = date_time.strftime(format)
+
+        try:
+            datetime_str = datetime.strptime(date_time, format)
+            return datetime_str
+        except ValueError as ve:
+            print(f"An exception occurred while reading the file: {ve}")
+            exit()
+        
+
+    def get_state(self, path="", file_name="state.yaml"):
+        with open('state.yaml', 'r') as file:
+            data = yaml.safe_load(file)        
+
+        return data  
+    
+    def save_state(self, path="", data:dict="", file_name="state.yaml"):
+        """
+        Save the state.yaml file
+        """
+
+        lastRun = data.get("activity").get("lastRun")
+        catalog_lastRun = data.get("catalog").get("lastRun")
+        catalog_lastFulScan = data.get("catalog").get("lastFullScan")       
+
+        if self.convert_dt_str(lastRun) < datetime.now():
+            data["activity"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+        if self.convert_dt_str(catalog_lastRun) < datetime.now():
+            data["catalog"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+        if datetime.now() - self.convert_dt_str(catalog_lastFulScan) > timedelta(days=30):
+            data["catalog"]["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+
+        path = f"{path}"
+
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
+            os.chdir(path)
+
+            with open(file_name, "w") as file:
+                yaml.dump(data, file)
+        else:
+            with open(file_name, "w") as file:
+                yaml.dump(data, file)
+
+    async def get_state2(self, path, file_name="state.json"):
         """
         takes a path arguement as string 
         takes a file_name as a string (optional parameter)
@@ -106,31 +155,28 @@ class Bob:
         and scan dates
         """
         sp = json.loads(self.app_settings['ServicePrincipal'])
-        FF = File_Table_Management(
-            tenant_id=sp['TenantId'],
-            client_id=sp['AppId'],
-            client_secret=sp['AppSecret'],
-            workspace_name=self.app_settings['WorkspaceName']
-        )
-        fsc = FF.fsc
+        FF = File_Table_Management()
+        fsc = FF.fsc #await FF.get_file_system_client()
+        try:
+            paths = fsc.get_paths(path=path)
+            found = False
+            for p in paths:
+                if file_name in p.name:
+                    found = True
+                    break
+        except TypeError as te:
+            print(f"this is an error {te}")
 
-        paths = fsc.get_paths(path=path)
-        found = False
-        for p in paths:
-            if file_name in p.name:
-                found = True
-                break
-        
         # create a directory client
-        dc = FF.create_directory_client(fsc, path=path)
-        
+        dc = FF.create_directory_client(path=path)
         if found:
             try:
+                
                 FF.download_file_from_directory(directory_client=dc, local_path="./",file_name=file_name)
-
+        
                 with open(file_name, 'r') as file:
                     f = file.read()
-
+        
                 return f
                                                 
             except Exception as e:
@@ -142,33 +188,29 @@ class Bob:
                 cfg["lastFullScan"] = (datetime.now() + timedelta(days=-30)).strftime('%Y-%m-%dT%H:%M:%SZ')
             else:
                 cfg["lastRun"] = (datetime.now() + timedelta(days=-30)).strftime('%Y-%m-%dT%H:%M:%SZ')
-
+        
             try:
                 with open(file_name, 'w') as file:
                     file.write(json.dumps(cfg))
 
-                folder = FF.create_directory(file_system_client=FF.fsc, directory_name=path)    
-                FF.upload_file_to_directory(directory_client=folder,local_path= "./", file_name=file_name)                
-
-                return json.dumps(cfg)
+                folder = await FF.create_directory(file_system_client=FF.fsc, directory_name=path)    
+                await FF.upload_file_to_directory(directory_client=folder,local_path= "./", file_name=file_name)                
+       
+                return await json.dumps(cfg)
             except Exception as e:
                 print("An exception occurred while creating file:", str(e))
 
     logging.info('Started')
 
-    async def save_state(self, path, file_name="state.json"):
+    async def save_state2(self, path, file_name="state.json"):
         """
         takes a path arguement as string 
         takes a file_name as a string (optional parameter)
         saves a json file that has information about the last run
         """
         sp = json.loads(self.app_settings['ServicePrincipal'])
-        FF = File_Table_Management(
-            tenant_id=sp['TenantId'],
-            client_id=sp['AppId'],
-            client_secret=sp['AppSecret'],
-            workspace_name=self.app_settings['WorkspaceName']
-        )
+        FF = File_Table_Management()
+            
         fsc = FF.fsc
 
         cfg = dict()
