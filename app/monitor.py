@@ -9,6 +9,8 @@ from app.modules.catalog import main as Catalog
 from app.modules.graph import main as Graph
 from app.modules.tenant import main as Tenant
 from app.modules.refreshhistory import main as RefreshHistory
+from app.modules.gateway import main as Gateway
+
 from datetime import datetime, timedelta
 from app.utility.helps import Bob
 from app.utility.file_management import File_Management
@@ -25,6 +27,7 @@ async def task(name, work_queue):
     timer = Timer(text=f"Task {name} elapsed time: {{:.1f}}")
     while not work_queue.empty():
         module = await work_queue.get()
+        
         print(f"Task {name} running {module.__name__}")
         timer.start()
         await module()
@@ -55,6 +58,7 @@ async def main():
             asyncio.create_task(task("Catalog", work_queue)),
             asyncio.create_task(task("Graph", work_queue)),
             asyncio.create_task(task("Tenant", work_queue)),
+            asyncio.create_task(task("Gateway", work_queue)),
             asyncio.create_task(task("Refresh History", work_queue))
         )
 
