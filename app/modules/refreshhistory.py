@@ -36,15 +36,37 @@ async def main():
 
 #    state = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
  
-    rest_api = "admin/capacities/refreshables"
+    # rest_api = "admin/capacities/refreshables"
+    # GET https://api.powerbi.com/v1.0/myorg/admin/groups?$expand=datasets
+    # htpps://api.powerbi.com/v1.0/myorg/admin/groups?$expand=datasets
+    rest_api = "admin/groups?$expand=datasets&$top=5000"
 
     fm = File_Management()
 
+    # get a list of workspaces with datasets that have are refreshable
     result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
+    
     if "ERROR" in result:
         print(f"Error: {result}")
     else:
-        await fm.save(path=lakehouse_dir, file_name=file_name,content=result)
+
+        # GET https://api.powerbi.com/v1.0/myorg/groups/{groupId}/datasets/{datasetId}/refreshes
+
+        resfresh_history = list()
+
+        for item in result['value']:
+            for dataset in item['datasets']:
+                if dataset['isRefreshable']==True:
+                    rest_api = f"groups/{item['id']}/datasets/{dataset['id']}/refreshes"
+                    try:
+                        refreshes = await bob.invokeAPI(rest_api=rest_api, headers=headers)
+                        for refresh in refreshes['value']:
+                            if len(refresh)>0:
+                                resfresh_history.append(refresh)
+                        
+                        await fm.save(path=lakehouse_dir, file_name=file_name,content=resfresh_history)
+                    except Exception as e:
+                        pass
 
         #dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
         #await FF.write_json_to_file(directory_client=dc, file_name=file_name, json_data=result)
