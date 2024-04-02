@@ -9,17 +9,16 @@ class File_Management(File_Table_Management, Blob_File_Management, Local_File_Ma
 
     def __init__(self):
         self.settings = dotenv_values(".env")
-        self.bfm = Blob_File_Management()
-        self.ftm = File_Table_Management()
-        self.lfm = Local_File_Management(self.settings['OutputPath'])
-
 
         if self.settings['StorageAccountContainerName']:
+            self.bfm = Blob_File_Management()
             self.storage_location = "blob"
         elif self.settings["OutputPath"]:
             self.storage_location = "local"
+            self.lfm = Local_File_Management(self.settings['OutputPath'])
         else:
             self.storage_location = "lakehouse"
+            self.ftm = File_Table_Management()
             
 
     async def save(self, path:str, file_name:str, content):
