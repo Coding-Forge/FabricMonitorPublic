@@ -34,11 +34,7 @@ async def main():
 
 ##################### INTIALIZE THE CONFIGURATION #####################
 
-#    state = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
- 
-    # rest_api = "admin/capacities/refreshables"
     # GET https://api.powerbi.com/v1.0/myorg/admin/groups?$expand=datasets
-    # htpps://api.powerbi.com/v1.0/myorg/admin/groups?$expand=datasets
     rest_api = "admin/groups?$expand=datasets&$top=5000"
 
     fm = File_Management()
@@ -54,6 +50,8 @@ async def main():
 
         resfresh_history = list()
 
+        # A dataset may not have refresh history even though it is refreshable (marked as isRefreshable=True)
+        # any dataset that does not have a refresh history will return a 404 error
         for item in result['value']:
             for dataset in item['datasets']:
                 if dataset['isRefreshable']==True:
@@ -67,12 +65,8 @@ async def main():
                         await fm.save(path=lakehouse_dir, file_name=file_name,content=resfresh_history)
                     except Exception as e:
                         pass
+                        # This is basically a 404 error because there isn't any refresh history for this dataset
 
-        #dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=lakehouse_dir)
-        #await FF.write_json_to_file(directory_client=dc, file_name=file_name, json_data=result)
-
-# TODO: Fix error that comes from return application/json
-# doesn't kill the job but does throw an error
 
 if __name__ == "__main__":
     asyncio.run(main())
