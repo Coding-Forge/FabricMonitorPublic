@@ -54,7 +54,7 @@ async def main():
         # any dataset that does not have a refresh history will return a 404 error
         for item in result['value']:
             for dataset in item['datasets']:
-                if dataset['isRefreshable']==True:
+                if dataset['isRefreshable']==True and dataset['addRowsAPIEnabled']==False:
                     rest_api = f"groups/{item['id']}/datasets/{dataset['id']}/refreshes"
                     try:
                         refreshes = await bob.invokeAPI(rest_api=rest_api, headers=headers)
