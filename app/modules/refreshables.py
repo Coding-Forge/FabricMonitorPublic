@@ -45,7 +45,7 @@ async def main():
     if "ERROR" in result:
         print(f"Error: {result}")
     else:
-        print(result['value'])
+        # print(result['value'])
         await fm.save(path=lakehouse_dir, file_name=file_name,content=result['value'])
 
 if __name__ == "__main__":

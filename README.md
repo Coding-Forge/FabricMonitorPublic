@@ -1,6 +1,9 @@
 # Introduction 
 This project looks to take advantage of all the work put into the original Power BI Monitor application and port it to Fabric. This project has several components including a means of containerizing the application and for those enthusiasts that like to use Jupyter Notebooks a whole section is devoted to "BUILDING" the application but using notebooks.
 
+**NOTE**  
+The application was written using Python 3.10.13 and has successfully been tested up through Python 3.12.2. It is recommended that you install Python 3.12 however you may use Python 3.10.13. 
+
 # Getting Started
 
 What you need to do to use this application
@@ -8,7 +11,9 @@ What you need to do to use this application
 2.	Grant permissions to the Service Principal  
     a. Fabric Admin Portal  
     b. Service Principal API permissions
-3.	Create your .env file
+3.	Create your .env file  
+    a. Set the cron time for each module  
+    b. Select which modules you would like the monitor application to use  
 4.	Using the application  
     a. Native Python Application  
     b. Docker Container  
