@@ -8,6 +8,7 @@ azure-storage-file-share==12.15.0
 chardet==5.2.0
 charset-normalizer==3.3.2
 codetiming==1.4.0
+croniter==2.0.3
 cryptography==42.0.2
 idna==3.6
 isodate==0.6.1

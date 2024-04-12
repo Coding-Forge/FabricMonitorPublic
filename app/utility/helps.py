@@ -121,17 +121,18 @@ class Bob:
         Save the state.yaml file
         """
 
-        lastRun = data.get("activity").get("lastRun")
-        catalog_lastRun = data.get("catalog").get("lastRun")
-        catalog_lastFulScan = data.get("catalog").get("lastFullScan")       
+        # lastRun = data.get("activity").get("lastRun")
+        # catalog_lastRun = data.get("catalog").get("lastRun")
+        # catalog_lastFulScan = data.get("catalog").get("lastFullScan")       
 
-        if self.convert_dt_str(lastRun) < datetime.now():
-            data["activity"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        # if self.convert_dt_str(lastRun) < datetime.now():
+        #     data["activity"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
-        if self.convert_dt_str(catalog_lastRun) < datetime.now():
-            data["catalog"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        # if self.convert_dt_str(catalog_lastRun) < datetime.now():
+        #     data["catalog"]["lastRun"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
-        if datetime.now() - self.convert_dt_str(catalog_lastFulScan) > timedelta(days=30):
+        # update the lastFullScan date if it is older than 30 days
+        if datetime.now() - self.convert_dt_str(data["catalog"]["lastFullScan"]) > timedelta(days=30):
             data["catalog"]["lastFullScan"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 

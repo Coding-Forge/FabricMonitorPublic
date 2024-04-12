@@ -2,13 +2,13 @@ import json
 from app.utility.fabric import File_Table_Management
 from app.utility.blob import Blob_File_Management
 from app.utility.local import Local_File_Management
-
-from dotenv import dotenv_values
+from app.utility.helps import Bob
 
 class File_Management(File_Table_Management, Blob_File_Management, Local_File_Management):
 
     def __init__(self):
-        self.settings = dotenv_values(".env")
+        self.bob = Bob()
+        self.settings = self.bob.get_settings()
 
         if self.settings['StorageAccountContainerName']:
             self.bfm = Blob_File_Management()
@@ -38,8 +38,12 @@ class File_Management(File_Table_Management, Blob_File_Management, Local_File_Ma
 
         #save file to storage
             if self.storage_location == "blob":
-
-                path = f"{path}{file_name}"
+                root = self.settings['StorageAccountContainerRootPath']
+                if root:
+                    path = f"{root}/{path}{file_name}"
+                else:
+                    path = f"{path}{file_name}"
+                    
                 #print(path)
                 await self.bfm.write_to_file(blob_name=path, content=content)
             elif self.storage_location == "local":

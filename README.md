@@ -53,7 +53,26 @@ Your `.env` file will file will hold your information about what operations you 
 You can determine where your data will be stored. In your `.env` you need to fill in information for a blob container if you want to store information to blob. If you would like to use a **FABRIC** Lakehouse then fill in the name of the Lakehouse and its required information and lastly, if you would like your data saved locally you can fill in a location in the local directory value. If you would like more storage capabilities then submit an issue and it can be placed on the backlog for consideration
 
 ## Using the Application  
-This repository has three ways of using the application for gathering information from the Power BI and Fabric APIs. If you would like to deploy your application to a container then you can leverage the Dockerfiles in the containers folders. There are two Dockerfiles, one will execute the application upon startup and the other is set up to be run as a `CRON` job. Both of these images are built from the latest version of Ubuntu.
+This repository has three ways of using the application for gathering information from the Power BI and Fabric APIs. Every module in the application can be assigned a specific time to execute using the `cron syntax`. After executing the `Monitor.py` module the application will determine if the module should be executed. The application will then update the `State.yaml` file with a timestamp that will be used for further updates. If you would like to deploy your application to a container then you can leverage the Dockerfiles in the containers folders. There are two Dockerfiles, one will execute the application upon startup and the other is set up to be run as a `CRON` job. Both of these images are built from the latest version of Ubuntu.
+
+### Understanding CRON
+The `cron` statement is consists of 5 groups if time indicated by the asterisk. The syntax supports the use of commas or dashes to indicate more than one value. The following is the grouping for a `cron` statement. [Understanding cron](https://linuxhandbook.com/crontab/) and how to write simple to complex statements.  
+```
+* * * * *    Script/Command
+| | | | |
+| | | | |__ Day of the week (0-6) Sunday == 0  
+| | | |____ Month of the year (1-12)  
+| | |______ Day of the month (1-31)  
+| |________ Hour of the day (0-23)  
+|__________ Minute of the hour (0-59)  
+
+```
+
+The following will set the module to run every day of the week
+```
+* * * * 0-6
+```
+
 
 ### Running as an Application  
 You can run the code by using the following command from the root of this code to execute all the modules or you can run them singly:  
