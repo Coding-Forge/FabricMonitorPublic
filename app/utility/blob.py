@@ -41,7 +41,8 @@ class Blob_File_Management:
                 account_url=self.storage_url, 
                 container_name=self.container_name, 
                 blob_name=blob_name, 
-                credential=self.credentials
+                credential=self.credentials,
+                
             )
 
         else:

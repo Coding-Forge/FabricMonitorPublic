@@ -98,6 +98,9 @@ async def get_workspace_info(workspace_groups, FullScan=False):
                         else:
                             file_name=f"scanResults.json"
 
+                        stamp = datetime.today().strftime("%Y-%m-%d-%H_%M_%S_%f")
+                        file_name = stamp + "." + file_name
+
                         await fm.save(path=path, file_name=file_name, content=scanResult)
                         #await FF.write_json_to_file(directory_client=dc, file_name="scanResults.json", json_data=scanResult)
                     except TypeError as e:
