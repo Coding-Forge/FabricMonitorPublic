@@ -1,6 +1,7 @@
 import asyncio
 import json
 import yaml
+import sys
 
 from codetiming import Timer
 from croniter import croniter
@@ -58,7 +59,7 @@ async def main():
     bob = Bob()
 
     settings = bob.get_settings()
-
+    args = sys.argv[1:]
     # get the state.yaml file that include information about the last run
     current_state = bob.get_state("local")
 

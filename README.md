@@ -17,7 +17,8 @@ What you need to do to use this application
 4.	Using the application  
     a. Native Python Application  
     b. Docker Container  
-    c. Notebooks  
+    c. Notebooks
+    d. Arguments  
 5. Build and Test
 
 
@@ -78,6 +79,16 @@ The following will set the module to run every day of the week
 * * * * 0-6
 ```
 
+### Arguments  
+
+The application can accept one argument that will retrieve all workspaces for the catalog that have been modified. This should be run at the beginning use of the Fabric Monitor and from that point on should be updated daily or monthly depending upon your needs. The following argument will cause the catalog to scan all modified workspaces.
+```
+python -m app.monitor --base True
+```
+or to run just the catalog module
+```
+python -m app.modules.catalog --base True
+```
 
 ### Running as an Application  
 You can run the code by using the following command from the root of this code to execute all the modules or you can run them singly:  

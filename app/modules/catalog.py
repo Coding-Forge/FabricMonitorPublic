@@ -3,6 +3,7 @@ import json
 import time
 import asyncio
 from codetiming import Timer
+import sys
 
 from datetime import datetime, timedelta
 from app.utility.helps import Bob
@@ -22,6 +23,7 @@ getInfoOuterBatchCount = 1500
 getInfoInnerBatchCount = 100
 runsInParallel = 16       
 
+
 ####### CATALOG PRECONFIGURATION #######
 ##################### INTIALIZE THE CONFIGURATION #####################
 
@@ -40,15 +42,15 @@ sp = json.loads(settings['ServicePrincipal'])
 def RunFullScan(value=False):
     FullScan = value
 
-async def get_workspace_info(workspace_groups, FullScan=False):
+async def get_workspace_info(workspace_groups, FullScan=False,fileIndex=0):
     workspaceScanResults = []
+    
     
     body = {
         "workspaces":workspace_groups
     }
 
     #print(f"Scanning workspaces: {body}")
-
     rest_api = "admin/workspaces/getInfo?lineage=True&datasourceDetails=True&datasetSchema=True&datasetExpressions=True"
     result = await bob.invokeAPI(rest_api=rest_api, headers=headers, json=body) 
 
@@ -56,7 +58,7 @@ async def get_workspace_info(workspace_groups, FullScan=False):
         print(f"Error: {result}")
     else:
         workspaceScanResults.append(result)
-
+        
         for workspaceScanResult in workspaceScanResults:
 
             while(workspaceScanResult.get("status") in ["Running", "NotStarted"]):
@@ -88,7 +90,7 @@ async def get_workspace_info(workspace_groups, FullScan=False):
                     print(f"Error: Did not get scan results for workspace {id}")
                 else:
 
-                    today = datetime.utcnow()
+                    today = datetime.now()
                     fm = File_Management()
                     path = f"catalog/scans/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
                     #dc = await FF.create_directory(file_system_client=FF.fsc, directory_name=path)
@@ -97,25 +99,34 @@ async def get_workspace_info(workspace_groups, FullScan=False):
                             file_name=f"scanResults.fullscan.json"
                         else:
                             file_name=f"scanResults.json"
-
-                        stamp = datetime.today().strftime("%Y-%m-%d-%H_%M_%S_%f")
-                        file_name = stamp + "." + file_name
+                        
+                        index = str(fileIndex).zfill(5)
+                        file_name = f"{today.strftime('%Y%m%d')}_{index}.{file_name}"
 
                         await fm.save(path=path, file_name=file_name, content=scanResult)
+                        
                         #await FF.write_json_to_file(directory_client=dc, file_name="scanResults.json", json_data=scanResult)
                     except TypeError as e:
                         print(f"Please fix the async to handle the Error: {e} -- is this the issue")
 
 
-async def get_workspace_info_wrapper(subgroup, FullScan=False):
-    await get_workspace_info(workspace_groups=subgroup, FullScan=FullScan)
+async def get_workspace_info_wrapper(subgroup, FullScan=False, fileIndex=0):
+    await get_workspace_info(workspace_groups=subgroup, FullScan=FullScan, fileIndex=fileIndex)
 
 
 async def main():
     FullScan = False
+    allWorkspaces = False
 #    state = bob.get_state(f"/{settings['LakehouseName']}.Lakehouse/Files/catalog/")
     state = bob.get_state()
+    args = sys.argv[1:]
+
+    for arg in range(0,len(args),2):
+        if args[arg] == "--base":
+            if args[arg+1] == "True":
+                allWorkspaces = True
     
+
     getModifiedWorkspacesParams = settings.get("CatalogGetModifiedParameters")
     getInfoDetails = settings.get("CatalogGetInfoParameters")
 
@@ -147,10 +158,16 @@ async def main():
 
     #GET https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified?modifiedSince={modifiedSince}&excludePersonalWorkspaces={excludePersonalWorkspaces}&excludeInActiveWorkspaces={excludeInActiveWorkspaces}
 
-    rest_api = f"admin/workspaces/modified?modifiedSince={LastRun}T00:00:00.0000000Z&{getModifiedWorkspacesParams}"
+    ## if you do not pass the modifiedsince argument then all workspaces will be returned
+    if allWorkspaces:
+        rest_api = f"admin/workspaces/modified"
+    else:
+        rest_api = f"admin/workspaces/modified?modifiedSince={LastRun}T00:00:00.0000000Z&{getModifiedWorkspacesParams}"
     result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
 
     workspaces = list()
+
+    # print(f"catalog results for workspaces {result}")
 
     # Check if the request was successful
     if "ERROR" not in result:
@@ -206,7 +223,7 @@ async def main():
         subgroup = await work_queue.get()
         try:
             if len(subgroup) > 0:
-                await get_workspace_info_wrapper(subgroup=subgroup, FullScan=FullScan)
+                await get_workspace_info_wrapper(subgroup=subgroup, FullScan=FullScan,fileIndex=counter)
         # Try to catch any 429 errors
         except Exception as e:
             print(f"Error: {e} - sleeping for {scanStatusSleepSeconds} seconds")
