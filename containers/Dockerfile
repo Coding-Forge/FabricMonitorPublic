@@ -2,6 +2,10 @@
 #FROM ubuntu:20.04
 FROM ubuntu:latest
 
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y tzdata
+
 # Set the timezone to Eastern Time
 ENV TZ="America/New_York"
 
@@ -11,8 +15,8 @@ RUN apt-get update && apt-get install -y software-properties-common gcc
 # Add the deadsnakes PPA to get Python 3.10
 RUN add-apt-repository -y ppa:deadsnakes/ppa
 
-# Install Python 3.10
-RUN apt-get update && apt-get install -y python3.10 python3-distutils python3-pip python3-apt
+# Install Python 3.12
+RUN apt-get update && apt-get install -y python3.12 python3-distutils python3-pip python3-apt
 
 # Install cron
 RUN apt-get update && apt-get -y install cron
@@ -20,7 +24,7 @@ RUN apt-get update && apt-get -y install cron
 COPY requirements.txt .
 COPY .env .
 
-RUN echo "0 3 * * * root python3 -m /app.monitor" > /etc/cron.d/my_cron_job
+RUN echo "5 * * * * root python3 -m /app.monitor" > /etc/cron.d/my_cron_job
 
 # Make the cron job executable
 RUN chmod 0644 /etc/cron.d/my_cron_job
