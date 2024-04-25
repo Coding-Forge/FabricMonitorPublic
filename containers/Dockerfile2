@@ -17,6 +17,8 @@ RUN add-apt-repository -y ppa:deadsnakes/ppa
 # Install Python 3.10
 RUN apt-get update && apt-get install -y python3.12 python3-distutils python3-pip python3-apt
 
+ENV ROOT = WORKDIR
+
 COPY requirements.txt .
 COPY .env .
 COPY state.yaml .
@@ -25,13 +27,17 @@ COPY state.yaml .
 RUN pip3 install -r requirements.txt
 
 # Set the working directory
-WORKDIR /app
+#WORKDIR /app
 
 # Copy your Python code or other files into the container
-COPY app /app
+COPY app ./app
 
-WORKDIR ../
+# Ignore Linter and keep the relative path change dir
+#WORKDIR ../
 
 # Specify the default command to run when the container starts
 #CMD ["python3", "-u", "your_script.py"]
+
 CMD ["python3", "-m", "app.monitor"]
+
+

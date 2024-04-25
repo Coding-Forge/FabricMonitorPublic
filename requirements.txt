@@ -2,6 +2,7 @@ adal==1.2.7
 aiohttp==3.9.3
 azure-core==1.30.0
 azure-identity==1.15.0
+azure-functions==1.19.0
 azure-storage-blob==12.19.0
 azure-storage-file-datalake==12.14.0
 azure-storage-file-share==12.15.0

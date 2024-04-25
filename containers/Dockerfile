@@ -24,7 +24,9 @@ RUN apt-get update && apt-get -y install cron
 COPY requirements.txt .
 COPY .env .
 
-RUN echo "5 * * * * root python3 -m /app.monitor" > /etc/cron.d/my_cron_job
+ENV ROOT = WORKDIR
+
+RUN echo "5 * * * 0-6 root python3 -m app.monitor" > /etc/cron.d/my_cron_job
 
 # Make the cron job executable
 RUN chmod 0644 /etc/cron.d/my_cron_job
@@ -32,16 +34,10 @@ RUN chmod 0644 /etc/cron.d/my_cron_job
 # Install the required Python packages
 RUN pip3 install -r requirements.txt
 
-# Set the working directory
-WORKDIR /app
 
 # Copy your Python code or other files into the container
-COPY app /app
-
-WORKDIR ../
+COPY app ./app
 
 # Set up a cron job to run your Python module every day at 3:00 AM
-
-
 # Start the cron service
 CMD ["cron", "-f"]
