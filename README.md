@@ -17,9 +17,15 @@ What you need to do to use this application
 4.	Using the application  
     a. Native Python Application  
     b. Docker Container  
-    c. Notebooks
+    c. Notebooks  
     d. Arguments  
-5. Build and Test
+5.  Build and Test
+    a. Local Testing  
+        i. use Azureite for storage  
+        ii. 
+6.  Function Timer Trigger  
+    a. Set Cron  
+    b. Deploy  
 
 
 ## Create a Service Principal  

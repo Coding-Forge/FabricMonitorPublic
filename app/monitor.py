@@ -47,7 +47,7 @@ def is_function_due(cron_syntax, last_run):
     
     print(f"What is the next run date value {next_run_datetime} and what is the current datetime {datetime.now()}")
 
-    if next_run_datetime.strftime("%Y-%m-%d") <= datetime.now().strftime("%Y-%m-%d"):
+    if next_run_datetime.strftime("%Y-%m-%d %H:%M") <= datetime.now().strftime("%Y-%m-%d %H:%M"):
         return True
     else:
         return False
