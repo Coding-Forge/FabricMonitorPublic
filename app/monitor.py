@@ -80,7 +80,9 @@ async def main():
         if is_function_due(cron,last_run):
             run_jobs.append(module)
 
-    print(run_jobs)
+    if len(run_jobs) == 0:
+        print("No jobs to run")
+        return
 
     classes = [globals()[module] for module in run_jobs]
 
