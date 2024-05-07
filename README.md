@@ -26,7 +26,11 @@ What you need to do to use this application
 6.  Function Timer Trigger  
     a. Set Cron  
     b. Deploy  
-
+7. Consuming Data
+    a. FabricMonitor-BlobStorage.PBIT
+    b. pbimonitorwithflow.pbit
+8. DataFlow
+    a. FabricFlow.json
 
 ## Create a Service Principal  
 To use this application you will need to [create a service principal](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app) in Microsoft Entra. This service principal will need to be granted specific permissions within the [Fabric Admin Portal](https://app.fabric.microsoft.com/admin-portal) and for those that would also like to capture information about users licenses and other privileged information will have to grant permissions to Microsoft Graph.
@@ -138,7 +142,14 @@ You can also run each module as a Jupyter notebook. This allows you to step thro
 > Notebooks can be found in the notebook folder and each notebook will be named after a module that it mimics.
 
 
+### Reports  
+The power bi reports are templates that have parameters to fill in to populate the data. The simplest process is to set up a Dataflow Gen 1 in the Power BI Service and then use the Power BI template with flow. There is a defined flow where you will neeed to change the following in the json file  
+```
+<your account here> => the name of the storage account
+<your container name here> => the name of the container in the storage account
 
+you may not have to change the <capacity> but if you do you can find the capacity section of the url and replace it
+```
 
 
 # Build and Test
