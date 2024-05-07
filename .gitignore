@@ -17,5 +17,5 @@ env/
 venv/
 ```
 
-
+!Fabric/*.json
 .python_packages

@@ -26,10 +26,10 @@ What you need to do to use this application
 6.  Function Timer Trigger  
     a. Set Cron  
     b. Deploy  
-7. Consuming Data
-    a. FabricMonitor-BlobStorage.PBIT
-    b. pbimonitorwithflow.pbit
-8. DataFlow
+7. Consuming Data  
+    a. FabricMonitor-BlobStorage.PBIT  
+    b. pbimonitorwithflow.pbit  
+8. DataFlow  
     a. FabricFlow.json
 
 ## Create a Service Principal  
@@ -150,7 +150,7 @@ The power bi reports are templates that have parameters to fill in to populate t
 
 you may not have to change the <capacity> but if you do you can find the capacity section of the url and replace it
 ```
-
+You can also use the FabricMonitor and provide the name of the Storage account and the container name plus the UTC offset, RangeStart and RangeEnd along with your SAS or Account Key.
 
 # Build and Test
 TODO: Describe and show how to build your code and run the tests. 
