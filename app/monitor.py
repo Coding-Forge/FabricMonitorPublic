@@ -2,6 +2,7 @@ import asyncio
 import json
 import yaml
 import sys
+import logging
 
 from codetiming import Timer
 from croniter import croniter
@@ -78,6 +79,7 @@ async def main():
         last_run = bob.convert_dt_str(run)    
 
         if is_function_due(cron,last_run):
+            logging.info(f"The following module added to the run queue {module}")
             run_jobs.append(module)
 
     if len(run_jobs) == 0:

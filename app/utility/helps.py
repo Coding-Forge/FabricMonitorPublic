@@ -264,7 +264,13 @@ class Bob:
                     async with session.get(url) as response:
                         return await response.json(encoding='utf-8')
             else:
+
+                p = rest_api.find("api.fabric.microsoft")
+
                 url = api_root + rest_api
+                if p > 0:
+                    url = rest_api
+
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url, headers=headers) as response:
                         return await response.json(encoding='utf-8')
