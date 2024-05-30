@@ -9,6 +9,7 @@ from dotenv import load_dotenv, dotenv_values
 from datetime import datetime, timedelta
 from app.utility.fabric import File_Table_Management
 from datetime import datetime
+import tempfile
 
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
@@ -137,6 +138,7 @@ class Bob:
 
 
         path = f"{path}"
+
 
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)

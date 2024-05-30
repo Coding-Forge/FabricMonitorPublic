@@ -4,6 +4,7 @@ from app.utility.blob import Blob_File_Management
 from app.utility.local import Local_File_Management
 from app.utility.helps import Bob
 
+
 class File_Management(File_Table_Management, Blob_File_Management, Local_File_Management):
 
     def __init__(self):
@@ -65,3 +66,33 @@ class File_Management(File_Table_Management, Blob_File_Management, Local_File_Ma
             print(f"Error: {e}")
 
 
+    async def read(self, path:str, file_name:str):
+        try:
+            if self.storage_location == "blob":
+                root = self.settings['StorageAccountContainerRootPath']
+                if root:
+                    path = f"{root}/{path}{file_name}"
+                else:
+                    path = f"{path}{file_name}"
+                    
+                #print(path)
+                content = await self.bfm.read_from_file(blob_name=path)
+                
+            elif self.storage_location == "local":
+                await self.lfm.save(path=path, file_name=file_name, content=content)    
+            elif self.storage_location == "lakehouse":
+                #TODO: create a directory
+                #TODO: upload/stream to location
+
+                path = f"{self.settings['LakehouseName']}.Lakehouse/Files/{path}"   
+
+                path = path.replace("//","/")
+                
+                await self.ftm.write_json_to_file(path=path, file_name=file_name, json_data=content)
+            else:
+                print("No storage location found")
+                exit()
+
+            return content
+        except Exception as e:
+            print(f"Error: {e}")

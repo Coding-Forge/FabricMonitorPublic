@@ -19,27 +19,36 @@ fm = File_Management()
 
 ##### INTIALIZE THE CONFIGURATION #####
 
+async def get_workspaces(url:str, pageCount:int):
+    response = await bob.invokeAPI(url, headers=headers)
+    pivotDate = datetime.now()
+
+    workspaces = response.get("workspaces")
+
+    index = str(pageCount).zfill(5)
+
+    Path = f"workspaces/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/"
+    await fm.save(path=Path, file_name=f"{datetime.now().strftime('%Y%m%d')}_{index}.workspaces.json",content=workspaces)
+
+    try:
+        continuationUri = response.get("continuationUri")
+    except Exception as e:
+        pass
+
+    if continuationUri:
+        if "continuationToken" in continuationUri:
+            pageCount = pageCount + 1
+            await get_workspaces(url=continuationUri, pageCount=pageCount)
+
+
+
 async def main():
     logging.info('Started')
-    
-    config = bob.get_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
-
-    if isinstance(config, str):
-        lastRun = json.loads(config).get("activity").get("lastRun")
-    else:
-        lastRun = config.get("activity").get("lastRun")
-
-    # if lastRun is recorded then proceed from there
-    lastRun_tm = bob.convert_dt_str(lastRun)
-    pivotDate = lastRun_tm.replace(hour=0, minute=0, second=0, microsecond=0)
-    # Your code here
 
     url = "https://api.fabric.microsoft.com/v1/admin/workspaces"
 
-    response = await bob.invokeAPI(url, headers=headers)
-    
-    Path = f"workspaces/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/"
-    await fm.save(path=Path, file_name="workspaces.json",content=response)
+    await get_workspaces(url=url,pageCount=1)
+
 
 
 if __name__ == "__main__":

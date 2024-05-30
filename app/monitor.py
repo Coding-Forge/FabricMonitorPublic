@@ -3,6 +3,7 @@ import json
 import yaml
 import sys
 import logging
+import os
 
 from codetiming import Timer
 from croniter import croniter
@@ -58,11 +59,16 @@ def is_function_due(cron_syntax, last_run):
 async def main():
     # Your code here
     bob = Bob()
-
+    fm = File_Management()
     settings = bob.get_settings()
     args = sys.argv[1:]
     # get the state.yaml file that include information about the last run
-    current_state = bob.get_state("local")
+
+    if settings.get("StorageAccountConnStr"):
+        current_state = await fm.read(path="", file_name="state.yaml")
+    else:
+        current_state = bob.get_state("local")
+
 
     # get the modules selected in the configuration for the application
     modules = settings.get("ApplicationModules").replace(" ","").split(",")
@@ -77,7 +83,7 @@ async def main():
         run = current_state.get(f"{module.lower()}").get("lastRun")
 
         last_run = bob.convert_dt_str(run)    
-
+        
         if is_function_due(cron,last_run):
             logging.info(f"The following module added to the run queue {module}")
             run_jobs.append(module)
@@ -120,7 +126,7 @@ async def main():
     except Exception as e:
         print(f"Bob Error: {e}")
     try:
-        fm = File_Management()
+        
         await fm.save("", "state.yaml", current_state)
     except Exception as e:
         print(f"fm Error: {e}")

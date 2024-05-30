@@ -24,22 +24,36 @@ async def main():
     
     config = bob.get_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
 
-    if isinstance(config, str):
-        lastRun = json.loads(config).get("activity").get("lastRun")
-    else:
-        lastRun = config.get("activity").get("lastRun")
+    # if isinstance(config, str):
+    #     lastRun = json.loads(config).get("activity").get("lastRun")
+    # else:
+    #     lastRun = config.get("activity").get("lastRun")
 
     # if lastRun is recorded then proceed from there
-    lastRun_tm = bob.convert_dt_str(lastRun)
-    pivotDate = lastRun_tm.replace(hour=0, minute=0, second=0, microsecond=0)
+    # lastRun_tm = bob.convert_dt_str(lastRun)
+    # pivotDate = lastRun_tm.replace(hour=0, minute=0, second=0, microsecond=0)
     # Your code here
 
-    url = "https://api.fabric.microsoft.com/v1/admin/items"
 
-    response = await bob.invokeAPI(url, headers=headers)
+    today = datetime.now()
+    async def get_data(url,pageIndex=1):
+        pageIndex = str(pageIndex).zfill(5)
+        response = await bob.invokeAPI(url, headers=headers)
+        Path = f"items/{today.strftime('%Y')}/{today.strftime('%m')}/{today.strftime('%d')}/"
+        await fm.save(path=Path, file_name=f"fabricitems_{pageIndex}.json",content=response.get("itemEntities"))
+
+        try:
+            continuationUri = response.get("continuationUri")
+            if continuationUri:
+                await get_data(continuationUri)
+        except Exception as e:
+            logging.info("No continuation uri")
+            return
+
+    url = "https://api.fabric.microsoft.com/v1/admin/items"
+    await get_data(url)
+
     
-    Path = f"items/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/"
-    await fm.save(path=Path, file_name="fabricitems.json",content=response)
 
 
 if __name__ == "__main__":

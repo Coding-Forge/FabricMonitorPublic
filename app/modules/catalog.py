@@ -164,22 +164,24 @@ async def main():
     else:
         rest_api = f"admin/workspaces/modified?modifiedSince={LastRun}T00:00:00.0000000Z&{getModifiedWorkspacesParams}"
     result = await bob.invokeAPI(rest_api=rest_api, headers=headers)
-
     workspaces = list()
 
     # print(f"catalog results for workspaces {result}")
-
     # Check if the request was successful
-    if "ERROR" not in result:
+    
+    #TODO: Fix result if empty discontinue processing catalog
+
+    if result and "error" not in result:
         # Convert the JSON response to a pandas DataFrame
         for workspace in result:
             workspaces.append(workspace.get("id"))
-    else:
+    elif "error" in result:
         # Handle the error case
-        print(f"Error: {result}")
-        # TODO: do I quit from the application or retry
-        exit(0)
-
+        print(f"Error was thrown: {result}")
+        return
+    else:
+        print("No modified workspaces found for the time period searched")
+        return
     # The first thing is to get all the workspaces that have been modified
     # Split into groups of 500
     # scroll through the list of workspaces and get the scan results for each workspace
