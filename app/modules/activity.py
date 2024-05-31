@@ -41,6 +41,8 @@ async def activity_events(url=None, headers=None, pivotDate=None, pageIndex=1):
         if result.get("activityEventEntities"):
             audits.append(result.get("activityEventEntities"))
 
+            logging.info(f"Audits found: {audits}")
+
         # create the folder structure for the output path
         lakehousePath = f"activity/{pivotDate.strftime('%Y')}/{pivotDate.strftime('%m')}/"
 
@@ -59,6 +61,7 @@ async def activity_events(url=None, headers=None, pivotDate=None, pageIndex=1):
                     # result = requests.get(url=continuationUri, headers=head)
                     # if result.status_code == 200:
                     #     print(f"what is the result {result}")
+
                     pageIndex+=1
                     await activity_events(url=continuationUri, headers=head, pivotDate=pivotDate, pageIndex=pageIndex)
         except Exception as e:

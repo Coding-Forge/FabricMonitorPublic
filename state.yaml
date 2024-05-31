@@ -1,17 +1,19 @@
 activity:
-  lastRun: '2024-05-10T14:09:54.129818Z'
+  lastRun: '2024-05-31T16:00:02.620653Z'
 apps:
-  lastRun: '2024-05-10T14:09:54.129884Z'
+  lastRun: '2024-05-31T20:00:01.118457Z'
+capacity:
+  lastRun: '2024-05-31T16:18:29.104353Z'
 catalog:
   lastFullScan: '2024-05-02T13:34:21.775126Z'
-  lastRun: '2024-05-10T14:09:54.129897Z'
+  lastRun: '2024-05-31T20:00:01.118490Z'
 gateway:
-  lastRun: '2024-05-10T14:09:54.129939Z'
+  lastRun: '2024-05-31T00:00:44.255384Z'
 graph:
-  lastRun: '2024-05-10T14:09:54.129907Z'
+  lastRun: '2024-05-31T00:00:44.255374Z'
 refreshables:
-  lastRun: '2024-05-10T14:09:54.129948Z'
+  lastRun: '2024-05-31T00:00:44.255387Z'
 refreshhistory:
-  lastRun: '2024-05-10T14:09:54.129929Z'
+  lastRun: '2024-05-31T04:00:31.000683Z'
 tenant:
-  lastRun: '2024-05-10T14:09:54.129918Z'
+  lastRun: '2024-05-31T00:00:44.255377Z'

@@ -16,6 +16,8 @@ from app.modules.tenant import main as Tenant
 from app.modules.refreshhistory import main as RefreshHistory
 from app.modules.refreshables import main as Refreshables
 from app.modules.gateway import main as Gateway
+from app.modules.capacity import main as Capacity
+# from app.modules.roles import main as Roles
 
 
 from datetime import datetime, timedelta
@@ -80,13 +82,17 @@ async def main():
 
     for module in modules:
         cron = settings.get(f"{module}_cron")
-        run = current_state.get(f"{module.lower()}").get("lastRun")
-
-        last_run = bob.convert_dt_str(run)    
-        
-        if is_function_due(cron,last_run):
-            logging.info(f"The following module added to the run queue {module}")
+        try:
+            run = current_state.get(f"{module.lower()}").get("lastRun")
+            last_run = bob.convert_dt_str(run)    
+            if is_function_due(cron,last_run):
+                logging.info(f"The following module added to the run queue {module}")
+                run_jobs.append(module)
+        except:
+            # most likely the this is the first time running the module and will build the state.yaml file at the end
             run_jobs.append(module)
+            current_state[module.lower()] =  {"lastRun": "2024-05-31T04:00:31.000683Z"}
+            pass
 
     if len(run_jobs) == 0:
         print("No jobs to run")
@@ -118,6 +124,8 @@ async def main():
 
     # this has all the information needed to modify the state.yaml file
     # update the state.yaml file with the last run information
+
+    print(current_state)
     for job in run_jobs:
         current_state[job.lower()]["lastRun"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 

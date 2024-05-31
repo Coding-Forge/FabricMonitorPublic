@@ -275,7 +275,11 @@ class Bob:
 
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url, headers=headers) as response:
-                        return await response.json(encoding='utf-8')
+                        if response.ok:
+                            return await response.json(encoding='utf-8')
+                        return {"error" : "429 error thrown", "message": response}
+                            
+
 
   
 
