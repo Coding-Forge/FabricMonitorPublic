@@ -5,6 +5,7 @@ from app.utility.local import Local_File_Management
 from app.utility.helps import Bob
 
 
+
 class File_Management(File_Table_Management, Blob_File_Management, Local_File_Management):
 
     def __init__(self):
@@ -66,7 +67,13 @@ class File_Management(File_Table_Management, Blob_File_Management, Local_File_Ma
             print(f"Error: {e}")
 
 
-    async def read(self, path:str, file_name:str):
+    async def read(self, path="", file_name=""):
+        """sumary_line
+        
+        Keyword arguments:
+        argument -- description
+        Return: returns a file
+        """
         try:
             if self.storage_location == "blob":
                 root = self.settings['StorageAccountContainerRootPath']
@@ -74,8 +81,7 @@ class File_Management(File_Table_Management, Blob_File_Management, Local_File_Ma
                     path = f"{root}/{path}{file_name}"
                 else:
                     path = f"{path}{file_name}"
-                    
-                #print(path)
+
                 content = await self.bfm.read_from_file(blob_name=path)
                 
             elif self.storage_location == "local":

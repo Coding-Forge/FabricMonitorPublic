@@ -17,7 +17,7 @@ from app.modules.refreshhistory import main as RefreshHistory
 from app.modules.refreshables import main as Refreshables
 from app.modules.gateway import main as Gateway
 from app.modules.capacity import main as Capacity
-# from app.modules.roles import main as Roles
+from app.modules.roles import main as Roles
 
 
 from datetime import datetime, timedelta
@@ -66,11 +66,13 @@ async def main():
     args = sys.argv[1:]
     # get the state.yaml file that include information about the last run
 
-    if settings.get("StorageAccountConnStr"):
-        current_state = await fm.read(path="", file_name="state.yaml")
-    else:
-        current_state = bob.get_state("local")
-
+    # replacing get_st8te
+    fm = File_Management()
+    try:
+        current_state = await fm.read(file_name="state.yaml")
+    except Exception as e:
+        print(f"Error: {e}")
+        return
 
     # get the modules selected in the configuration for the application
     modules = settings.get("ApplicationModules").replace(" ","").split(",")
@@ -125,7 +127,6 @@ async def main():
     # this has all the information needed to modify the state.yaml file
     # update the state.yaml file with the last run information
 
-    print(current_state)
     for job in run_jobs:
         current_state[job.lower()]["lastRun"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 

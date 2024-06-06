@@ -6,7 +6,7 @@ from dotenv import load_dotenv, dotenv_values
 from datetime import datetime, timedelta
 import yaml
 
-from azure.storage.blob import BlobClient
+from azure.storage.blob import BlobClient, BlobServiceClient
 from azure.identity import ClientSecretCredential
 
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
@@ -27,7 +27,10 @@ class Blob_File_Management:
 
 
     def read_from_file(self, blob_name):
-        pass
+        blob_service_client = BlobServiceClient.from_connection_string(self.app_settings.get("StorageAccountConnStr"))
+        blob_client = blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
+        blob_content = blob_client.download_blob().readall()
+        return blob_client
 
     async def write_to_file(self, blob_name, content):
         """

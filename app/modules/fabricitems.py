@@ -22,7 +22,13 @@ fm = File_Management()
 async def main():
     logging.info('Started')
     
-    config = bob.get_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
+    try:
+        config = await fm.read(file_name="state.yaml")
+    except Exception as e:
+        print(f"Error: {e}")
+        return
+
+
 
     # if isinstance(config, str):
     #     lastRun = json.loads(config).get("activity").get("lastRun")

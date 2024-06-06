@@ -2,10 +2,11 @@ import asyncio
 import json
 import logging
 import random
+import yaml
 import time
 
 from datetime import datetime, timedelta
-from ..utility.helps import Bob
+from app.utility.helps import Bob
 from app.utility.file_management import File_Management
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
@@ -25,7 +26,7 @@ async def record_audits(path, audit, pivotDate, pageIndex=1):
 
     await fm.save(path=path, file_name=lakehouseFile, content=audit)
     flagNoActivity = False
-
+   
 
 async def activity_events(url=None, headers=None, pivotDate=None, pageIndex=1):
     audits = list()
@@ -72,7 +73,12 @@ async def activity_events(url=None, headers=None, pivotDate=None, pageIndex=1):
 async def main():
     logging.info('Started')
     
-    config = bob.get_state(path=f"{settings['LakehouseName']}.Lakehouse/Files/activity/")
+    fm = File_Management()
+    try:
+        config = await fm.read(file_name="state.yaml")
+    except Exception as e:
+        print(f"Error: {e}")
+        return
 
     if isinstance(config, str):
         lastRun = json.loads(config).get("activity").get("lastRun")

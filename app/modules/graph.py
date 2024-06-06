@@ -40,8 +40,6 @@ async def main():
     
 ##################### INTIALIZE THE CONFIGURATION #####################
 
-#    state = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
- 
     graphUrl = "https://graph.microsoft.com/beta"
     outputPath = f"{lakehouse_catalog}"
     graphCalls = [

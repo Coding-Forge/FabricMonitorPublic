@@ -7,6 +7,7 @@ import aiohttp
 from typing import Dict, Any, Coroutine
 from dotenv import load_dotenv, dotenv_values
 from datetime import datetime, timedelta
+# from app.utility.file_management import File_Management
 from app.utility.fabric import File_Table_Management
 from datetime import datetime
 import tempfile
@@ -112,10 +113,7 @@ class Bob:
         
 
     def get_state(self, path="", file_name="state.yaml"):
-        with open('state.yaml', 'r') as file:
-            data = yaml.safe_load(file)        
-
-        return data  
+        return "changed direction"  
     
     def save_state(self, path="", data:dict="", file_name="state.yaml"):
         """

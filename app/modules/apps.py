@@ -38,10 +38,13 @@ async def main():
 
 ##################### INTIALIZE THE CONFIGURATION #####################
 
+    # replacing get_st8te
+    fm = File_Management()
     try:
-        state = bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
+        state = await fm.read(file_name="state.yaml")
     except Exception as e:
         print(f"Error: {e}")
+        return
 
     if isinstance(state, str):
         LastRun = json.loads(state).get("catalog").get("lastRun")

@@ -117,8 +117,14 @@ async def get_workspace_info_wrapper(subgroup, FullScan=False, fileIndex=0):
 async def main():
     FullScan = False
     allWorkspaces = False
-#    state = bob.get_state(f"/{settings['LakehouseName']}.Lakehouse/Files/catalog/")
-    state = bob.get_state()
+
+    fm = File_Management()
+    try:
+        state = await fm.read(file_name="state.yaml")
+    except Exception as e:
+        print(f"Error: {e}")
+        return
+
     args = sys.argv[1:]
 
     for arg in range(0,len(args),2):

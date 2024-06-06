@@ -38,8 +38,6 @@ async def main():
 
 ##################### INTIALIZE THE CONFIGURATION #####################
 
-#    state = await bob.get_state(f"{settings['LakehouseName']}.Lakehouse/Files/catalog/")
- 
     url = "https://api.fabric.microsoft.com/v1/admin/tenantsettings"
     
     fm = File_Management()
