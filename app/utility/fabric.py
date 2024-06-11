@@ -11,7 +11,7 @@ class File_Table_Management:
 
     def __init__(self):
         
-        self.settings = dotenv_values(".env")
+        self.settings = dotenv_values("app/.env")
         self.sp = json.loads(self.settings['ServicePrincipal'])
         self.tenant_id = self.sp['TenantId']
         self.client_id = self.sp['AppId']

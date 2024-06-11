@@ -7,7 +7,7 @@ logging.basicConfig(filename='myapp.log', level=logging.INFO)
 class Local_File_Management:
 
     def __init__(self, root_path:str=None):
-        self.settings = dotenv_values(".env")
+        self.app_settings = dotenv_values("app/.env")
         self.root_path = root_path
 
     async def save(self, path:str, file_name:str, content):

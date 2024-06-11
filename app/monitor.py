@@ -131,11 +131,6 @@ async def main():
         current_state[job.lower()]["lastRun"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
     try:
-        bob.save_state(path=".", data=current_state)
-    except Exception as e:
-        print(f"Bob Error: {e}")
-    try:
-        
         await fm.save("", "state.yaml", current_state)
     except Exception as e:
         print(f"fm Error: {e}")

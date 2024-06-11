@@ -18,7 +18,7 @@ logging.basicConfig(filename='myapp.log', level=logging.INFO)
 class Bob:
 
     def __init__(self):
-        self.app_settings = dotenv_values(".env")
+        self.app_settings = dotenv_values("app/.env")
 
     async def create_path(self, path):
         """

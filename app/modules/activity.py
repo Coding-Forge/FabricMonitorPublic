@@ -78,7 +78,6 @@ async def main():
         config = await fm.read(file_name="state.yaml")
     except Exception as e:
         print(f"Error: {e}")
-        return
 
     if isinstance(config, str):
         lastRun = json.loads(config).get("activity").get("lastRun")
